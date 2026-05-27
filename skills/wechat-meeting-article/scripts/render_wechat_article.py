@@ -19,6 +19,8 @@ SOFT = "#eef7fa"
 WARM = "#faf7ef"
 BORDER = "#d9e8ee"
 LINE = "#e7edf0"
+BRAND_GREEN = "#0f9f76"
+BRAND_GOLD = "#b58a3a"
 
 
 def configure_stdio() -> None:
@@ -47,7 +49,61 @@ def paragraphs(text: str, *, size: int = 15, margin_top: int = 8) -> str:
     return "".join(rendered)
 
 
-def h2(title: str, index: int | None = None) -> str:
+def brand_enabled(article: dict[str, Any]) -> bool:
+    meta = article.get("meta") or {}
+    return (article.get("theme") or meta.get("theme") or "").lower() == "zhengeryanzi"
+
+
+def brand_icon(size: int = 28) -> str:
+    return (
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}" viewBox="0 0 64 64" '
+        f'fill="none" style="display:block;">'
+        f'<rect x="10" y="14" width="44" height="36" rx="6" fill="#f8fbf8" stroke="{BRAND_GREEN}" stroke-width="3"/>'
+        f'<path d="M18 24h28M18 32h22M18 40h18" stroke="{BRAND_GREEN}" stroke-width="3" stroke-linecap="round"/>'
+        f'<circle cx="48" cy="18" r="5" fill="{BRAND_GOLD}"/>'
+        f'</svg>'
+    )
+
+
+def render_brand_masthead() -> str:
+    return (
+        '<section data-brand="zhengeryanzi" style="margin:0 0 18px;padding:14px 14px 12px;'
+        'border:1px solid #dceee8;border-radius:10px;background:#fbfdfb;">'
+        '<section style="display:flex;align-items:center;">'
+        f'<section style="width:34px;margin-right:10px;">{brand_icon(32)}</section>'
+        '<section style="flex:1;">'
+        f'<p style="margin:0;color:{TEXT};font-size:20px;font-weight:800;line-height:1.35;">郑而研资</p>'
+        f'<p style="margin:2px 0 0;color:{MUTED};font-size:12px;line-height:1.5;">资产评估学习与组会记录</p>'
+        '</section></section>'
+        '<p style="margin:10px 0 0;border-top:1px dashed #cfe5dc;"></p>'
+        f'<p style="margin:9px 0 0;color:{BRAND_GREEN};font-size:13px;line-height:1.6;">'
+        '以阅读记录讨论，以讨论沉淀研究。</p>'
+        '</section>'
+    )
+
+
+def render_brand_signature() -> str:
+    return (
+        '<section data-brand="zhengeryanzi" style="margin:26px 0 4px;padding:14px 12px;'
+        'border-top:1px solid #e6efe9;text-align:center;">'
+        f'<section style="width:30px;margin:0 auto 6px;">{brand_icon(28)}</section>'
+        f'<p style="margin:0;color:{TEXT};font-size:14px;font-weight:700;line-height:1.6;">本期记录由郑而研资整理</p>'
+        f'<p style="margin:3px 0 0;color:{MUTED};font-size:12px;line-height:1.5;">愿每次分享都成为下一步研究的线索</p>'
+        '</section>'
+    )
+
+
+def brand_section_mark() -> str:
+    return (
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 32 32" '
+        f'fill="none" style="display:inline-block;vertical-align:-3px;margin-right:5px;">'
+        f'<path d="M6 17c8-1 13-5 17-11 2 8-2 16-10 19-3 1-6 1-9 0 4-1 7-3 9-6" '
+        f'fill="#eaf7f1" stroke="{BRAND_GREEN}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'
+        f'</svg>'
+    )
+
+
+def h2(title: str, index: int | None = None, branded: bool = False) -> str:
     number = f"{index:02d}" if index is not None else ""
     number_html = (
         f'<span style="display:inline-block;margin-right:8px;color:{ACCENT_2};font-size:13px;'
@@ -58,7 +114,7 @@ def h2(title: str, index: int | None = None) -> str:
     return (
         '<section style="margin:30px 0 14px;padding:0 0 8px;border-bottom:1px solid #eef2f4;">'
         f'<p style="margin:0;color:{TEXT};font-size:19px;font-weight:800;line-height:1.45;">'
-        f'{number_html}{esc(title)}</p>'
+        f'{number_html}{brand_section_mark() if branded else ""}{esc(title)}</p>'
         f'<p style="margin:7px 0 0;width:44px;border-top:3px solid {ACCENT};"></p>'
         "</section>"
     )
@@ -123,9 +179,9 @@ def render_section_images(images: list[Any]) -> str:
     return "".join(render_image(image) for image in images or [])
 
 
-def render_english(data: dict[str, Any], index: int) -> str:
+def render_english(data: dict[str, Any], index: int, branded: bool = False) -> str:
     speeches = data.get("speeches") or []
-    parts = [h2(data.get("title") or "英语交流", index)]
+    parts = [h2(data.get("title") or "英语交流", index, branded)]
     parts.append(tag(data.get("topic") or ""))
     parts.append(paragraphs(data.get("intro") or ""))
     parts.append(render_section_images(data.get("images") or []))
@@ -175,8 +231,8 @@ def render_findings(findings: list[Any]) -> str:
     )
 
 
-def render_literature(data: dict[str, Any], index: int) -> str:
-    parts = [h2(data.get("title") or "文献分享", index)]
+def render_literature(data: dict[str, Any], index: int, branded: bool = False) -> str:
+    parts = [h2(data.get("title") or "文献分享", index, branded)]
     parts.append(paragraphs(data.get("intro") or ""))
     parts.append(render_section_images(data.get("images") or []))
     for paper_index, paper in enumerate(data.get("papers") or [], start=1):
@@ -213,8 +269,8 @@ def render_literature(data: dict[str, Any], index: int) -> str:
     return "".join(parts)
 
 
-def render_policy(data: dict[str, Any], index: int) -> str:
-    parts = [h2(data.get("title") or "时政交流", index)]
+def render_policy(data: dict[str, Any], index: int, branded: bool = False) -> str:
+    parts = [h2(data.get("title") or "时政交流", index, branded)]
     parts.append(tag(data.get("topic") or ""))
     parts.append(paragraphs(data.get("summary") or ""))
     parts.append(render_section_images(data.get("images") or []))
@@ -223,8 +279,8 @@ def render_policy(data: dict[str, Any], index: int) -> str:
     return "".join(parts)
 
 
-def render_free_discussion(data: dict[str, Any], index: int) -> str:
-    parts = [h2(data.get("title") or "自由讨论与会议总结", index)]
+def render_free_discussion(data: dict[str, Any], index: int, branded: bool = False) -> str:
+    parts = [h2(data.get("title") or "自由讨论与会议总结", index, branded)]
     parts.append(render_section_images(data.get("images") or []))
     for item in data.get("items") or []:
         parts.append(quote_block(item.get("text") or "", item.get("speaker") or ""))
@@ -243,13 +299,17 @@ def render_free_discussion(data: dict[str, Any], index: int) -> str:
 def render_article(article: dict[str, Any]) -> str:
     meta = article.get("meta") or {}
     sections = article.get("sections") or {}
-    parts = [
+    branded = brand_enabled(article)
+    parts = []
+    if branded:
+        parts.append(render_brand_masthead())
+    parts.extend([
         f'<h1 style="margin:0 0 10px;color:{TEXT};font-size:23px;line-height:1.35;font-weight:800;">'
         f'{esc(meta.get("title") or "组会纪要")}</h1>',
         f'<p style="margin:0 0 12px;color:{MUTED};font-size:13px;line-height:1.6;">'
         f'{esc(meta.get("date") or "")} {esc(meta.get("group") or "")} '
         f'{esc(meta.get("host") and "主持：" + meta.get("host"))}</p>',
-    ]
+    ])
     cover = meta.get("cover_image") or ""
     if cover:
         parts.append(render_image({"url": cover, "caption": meta.get("cover_caption") or ""}))
@@ -271,8 +331,10 @@ def render_article(article: dict[str, Any]) -> str:
     visible_index = 1
     for key, renderer in section_order:
         if sections.get(key):
-            parts.append(renderer(sections[key], visible_index))
+            parts.append(renderer(sections[key], visible_index, branded))
             visible_index += 1
+    if branded:
+        parts.append(render_brand_signature())
     return "".join(parts)
 
 

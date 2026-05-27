@@ -52,6 +52,12 @@ Use images only when they help the reader understand the meeting:
 
 Do not invent data charts, regression tables, or paper figures. If no suitable image exists, add image suggestions in the final response rather than fabricating visuals.
 
+## Brand Theme
+
+Use `"theme": "zhengeryanzi"` for the default account style. The renderer adds a static masthead, small inline SVG section marks, and a closing signature. Keep these static by default because WeChat editor compatibility is more predictable than animated SVG interactions.
+
+Only use SVG animation or interaction when the user explicitly asks for an experimental version and agrees to test it in WeChat preview.
+
 Useful image placement suggestions:
 
 - cover: meeting title slide, meeting photo, or a clean generated cover

@@ -177,6 +177,33 @@ class SkillScriptTests(unittest.TestCase):
             self.assertIn("研究背景", html)
             self.assertLessEqual(html.count("background:#eef7fa"), 1)
 
+    def test_renderer_adds_zhengeryanzi_brand_visuals(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            article = {
+                "theme": "zhengeryanzi",
+                "meta": {"title": "测试组会纪要", "summary": "导读"},
+                "sections": {
+                    "free_discussion": {
+                        "title": "自由讨论与会议总结",
+                        "items": [{"speaker": "老师", "text": "本次讨论围绕研究方法展开。"}],
+                        "closing": "会议结束。",
+                    }
+                },
+            }
+            article_path = tmp_path / "article.json"
+            out_dir = tmp_path / "dist"
+            article_path.write_text(json.dumps(article, ensure_ascii=False), encoding="utf-8")
+
+            result = run_script("render_wechat_article.py", str(article_path), "--out", str(out_dir))
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            html = (out_dir / "article.wechat.html").read_text(encoding="utf-8")
+            self.assertIn("郑而研资", html)
+            self.assertIn("data-brand=\"zhengeryanzi\"", html)
+            self.assertIn("<svg", html)
+            self.assertIn("本期记录由郑而研资整理", html)
+
 
 if __name__ == "__main__":
     unittest.main()

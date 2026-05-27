@@ -16,6 +16,7 @@ def configure_stdio() -> None:
 
 def starter_article() -> dict:
     return {
+        "theme": "zhengeryanzi",
         "meta": {
             "title": "第 X 周组会纪要",
             "date": "",

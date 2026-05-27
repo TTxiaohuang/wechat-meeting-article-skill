@@ -72,3 +72,4 @@ Use a restrained academic style:
 - Accent color: one muted blue or green plus light neutral backgrounds.
 - Section headers: clear but compact.
 - Quotes/comments: left border or subtle background, not oversized decorative cards.
+- For the `zhengeryanzi` theme, keep inline SVG decorations static: masthead, section marks, and closing signature. Avoid animation unless explicitly requested and preview-tested.

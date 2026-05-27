@@ -185,6 +185,7 @@ def build_article(input_dir: Path) -> dict[str, Any]:
             "cover_caption": "",
             "summary": "本次组会围绕英语交流、文献分享和自由讨论展开。",
         },
+        "theme": "zhengeryanzi",
         "sections": sections,
         "assets": {"images": []},
     }

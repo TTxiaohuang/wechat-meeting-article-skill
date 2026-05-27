@@ -731,8 +731,7 @@ def main() -> None:
             print(bad_line, file=sys.stderr)
             print(" " * (max(exc.colno - 1, 0)) + "^", file=sys.stderr)
         print(
-            "Tip: create article.json with scripts/create_article_json.py or Python json.dump. "
-            "Do not handwrite unescaped quotes inside JSON strings.",
+            "Tip: write article.json directly and avoid unescaped Chinese quotes (\"“”\") inside JSON strings. ",
             file=sys.stderr,
         )
         raise SystemExit(2) from exc

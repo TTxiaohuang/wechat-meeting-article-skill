@@ -8,6 +8,12 @@ Prefer creating the starter file with:
 python scripts/create_article_json.py --out article.json
 ```
 
+When extracted materials already exist, prefer creating an editable first draft with:
+
+```bash
+python scripts/draft_article_from_materials.py extracted_materials --out article.json
+```
+
 Then edit values while preserving JSON syntax.
 
 ## Minimal Example
@@ -114,5 +120,6 @@ Then edit values while preserving JSON syntax.
 - For literature sharing, prefer `background`, `research_question`, `methods_data`, `findings`, and `discussion_value` over a short generic `summary`.
 - `images` can contain strings or objects like `{"url": "path-or-url", "caption": "图注", "alt": "替代文本"}`. Use only supplied or explicitly generated images.
 - Omit sections with no source material instead of filling placeholder text.
+- Before delivery, run `scripts/check_article_json.py article.json --html dist/article.wechat.html` and fix publication-relevant warnings.
 - JSON requires standard double quotes around keys and string values. Do not paste unescaped quotes inside strings. For example, write `围绕'最近最想做的事情'展开分享` or escape quotes as `围绕\"最近最想做的事情\"展开分享`.
 - Do not handwrite large JSON blocks when a script can generate them. Use `json.dumps(..., ensure_ascii=False, indent=2)` in Python when building `article.json` programmatically.

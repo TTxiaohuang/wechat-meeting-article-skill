@@ -13,6 +13,8 @@ The script writes:
 - one Markdown text file per supported source file
 - `materials_manifest.json` with source paths, output paths, status, and errors
 
+Output filenames are sanitized for agent and shell compatibility. Quote-like characters, path separators, and other fragile punctuation are replaced with underscores. The original source path is preserved in `materials_manifest.json`.
+
 For long PDFs, the default is the first 5 pages:
 
 ```bash
@@ -38,6 +40,12 @@ $env:PYTHONIOENCODING="utf-8"
 ```
 
 Python scripts in this skill also call `sys.stdout.reconfigure(encoding="utf-8")` when supported.
+
+When reading extracted Chinese Markdown in an agent or shell, prefer Python with explicit UTF-8 encoding over plain `cat`/`type` if the terminal displays mojibake:
+
+```bash
+python -c "from pathlib import Path; print(Path('extracted_materials/file.md').read_text(encoding='utf-8'))"
+```
 
 ## Extraction Rules
 

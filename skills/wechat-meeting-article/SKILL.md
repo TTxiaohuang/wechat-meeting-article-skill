@@ -15,16 +15,17 @@ Use this skill to produce a publication-ready WeChat Official Account draft from
 2. Extract source text before writing. For `.docx`, `.pptx`, and `.pdf`, do not rely on raw file reads; use `scripts/extract_materials.py` or equivalent document parsers. Preserve speaker names, paper titles, DOI/URL fields, slide titles, and timestamps when available.
 3. Build source-grounded notes before writing. Do not invent attendees, papers, opinions, conclusions, or citations.
 4. Apply `references/editorial-style.md` before drafting. Keep sections flexible: omit unsupported sections instead of filling them with generic text.
-5. Create a valid `article.json` using `references/input-contract.md`. Prefer generating it with `scripts/create_article_json.py` and editing the JSON values instead of hand-writing JSON from scratch.
+5. Create `article.json`. Prefer `scripts/draft_article_from_materials.py extracted_materials --out article.json` for a rough first draft, then revise it against the sources. Use `scripts/create_article_json.py` only when starting from a blank template.
 6. Render HTML:
 
 ```bash
 python scripts/render_wechat_article.py path/to/article.json --out dist
 ```
 
-7. Review `dist/article.preview.html` for reading order, missing fields, overlong cards, and mobile layout. Fix `article.json` and rerun the renderer.
-8. Tell the user to import by opening `article.preview.html` in a browser, selecting the rendered page, and copying the rendered rich text into WeChat. Do not tell them to paste the raw `article.wechat.html` source into the WeChat editor.
-9. Deliver `article.wechat.html` as the primary HTML artifact. Only create a WeChat platform draft when credentials and API access are explicitly available.
+7. Run `scripts/check_article_json.py article.json --html dist/article.wechat.html` and fix any warnings that affect publication quality.
+8. Review `dist/article.preview.html` for reading order, missing fields, overlong cards, and mobile layout. Fix `article.json` and rerun the renderer.
+9. Tell the user to import by opening `article.preview.html` in a browser, selecting the rendered page, and copying the rendered rich text into WeChat. Do not tell them to paste the raw `article.wechat.html` source into the WeChat editor.
+10. Deliver `article.wechat.html` as the primary HTML artifact. Only create a WeChat platform draft when credentials and API access are explicitly available.
 
 ## Dependency Setup
 
@@ -45,6 +46,8 @@ For a local extraction pass:
 ```bash
 python scripts/extract_materials.py path/to/material-folder --out extracted_materials
 ```
+
+Script paths in examples are relative to the skill directory. When an agent is working from another folder, use the absolute path to the script.
 
 ## Output Policy
 
@@ -68,6 +71,7 @@ Prefer "create draft, then human review" over direct publishing. Do not directly
 - Meeting summaries should be concise and avoid unsupported claims about consensus.
 - Keep `source` fields for traceability only. Do not display filenames, local paths, or transcript names in the WeChat article body.
 - Use provided meeting photos, PPT screenshots, paper figures, or generated cover assets when available and relevant. Do not invent data-bearing academic figures.
+- If no usable images are provided, include image placement suggestions in the final response or `source_trace.md` instead of fabricating figures.
 
 ## Resource Guide
 
@@ -77,8 +81,10 @@ Prefer "create draft, then human review" over direct publishing. Do not directly
 - Read `references/wechat-formatting.md` when adjusting HTML, SVG, card layout, or editor compatibility.
 - Read `references/wechat-api.md` only when the task involves creating a WeChat draft or uploading images/materials.
 - Use `scripts/extract_materials.py` to create Markdown text extracts and `materials_manifest.json`.
+- Use `scripts/draft_article_from_materials.py` to create a rough editable `article.json` from extracted Markdown materials.
 - Use `scripts/create_article_json.py` to create a valid starter JSON file.
 - Use `scripts/render_wechat_article.py` for deterministic HTML output.
+- Use `scripts/check_article_json.py` before delivery to catch source filename leaks, missing literature structure, and suspiciously short English speeches.
 - Use `assets/article-template.html` as the HTML template if the renderer needs visual changes.
 
 ## Cross-Agent Portability

@@ -42,10 +42,17 @@ Use images only when they help the reader understand the meeting:
 
 Do not invent data charts, regression tables, or paper figures. If no suitable image exists, add image suggestions in the final response rather than fabricating visuals.
 
+Useful image placement suggestions:
+
+- cover: meeting title slide, meeting photo, or a clean generated cover
+- English exchange: optional topic card
+- literature sharing: supplied paper framework figure, PPT key slide, or method flow diagram
+- discussion summary: meeting photo or reading list image
+
 ## WeChat Body Style
 
 - Use a short lead summary under the title.
 - Prefer compact section headings and clear paragraph rhythm.
-- Use quote blocks for meeting comments.
+- Use quote blocks for meeting comments. Avoid putting every literature subfield into a colored card; ordinary text with small headings is usually easier to read.
 - Avoid visible technical labels such as `source`, local filenames, JSON keys, extraction notes, or script names.
 - Keep wording warm and academic: accessible enough for public reading, but not marketing-like.

@@ -66,6 +66,12 @@ Create a valid starter JSON when needed:
 python skills\wechat-meeting-article\scripts\create_article_json.py --out article.json
 ```
 
+Or create a rough editable draft from extracted materials:
+
+```powershell
+python skills\wechat-meeting-article\scripts\draft_article_from_materials.py extracted_materials --out article.json
+```
+
 After an agent fills `article.json`, run:
 
 ```powershell
@@ -77,6 +83,12 @@ Outputs:
 ```text
 dist/article.wechat.html
 dist/article.preview.html
+```
+
+Run a publication-quality check:
+
+```powershell
+python skills\wechat-meeting-article\scripts\check_article_json.py article.json --html dist\article.wechat.html
 ```
 
 For manual WeChat import, open `dist/article.preview.html` in a browser and copy the rendered rich text. Do not paste the raw HTML source directly into the WeChat editor.

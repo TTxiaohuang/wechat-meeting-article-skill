@@ -41,7 +41,7 @@ def paragraphs(text: str, *, size: int = 15, margin_top: int = 8) -> str:
     for index, chunk in enumerate(chunks):
         rendered.append(
             f'<p style="margin:{margin_top if index == 0 else 7}px 0 0;'
-            f'color:{TEXT};font-size:{size}px;line-height:1.78;text-align:justify;">'
+            f'color:{TEXT};font-size:{size}px;line-height:1.82;text-align:justify;">'
             f'{esc(chunk).replace(chr(10), "<br>")}</p>'
         )
     return "".join(rendered)
@@ -78,8 +78,7 @@ def info_card(title: str, text: str) -> str:
     if not text:
         return ""
     return (
-        f'<section style="margin:12px 0 0;padding:12px 14px;border:1px solid {BORDER};'
-        f'border-radius:8px;background:{SOFT};">'
+        f'<section style="margin:12px 0 0;padding:0 0 0 10px;border-left:3px solid {BORDER};">'
         f'<p style="margin:0 0 4px;color:{ACCENT};font-size:14px;font-weight:700;line-height:1.5;">{esc(title)}</p>'
         f'{paragraphs(text, size=14, margin_top=0)}'
         "</section>"
@@ -141,7 +140,7 @@ def render_english(data: dict[str, Any], index: int) -> str:
         speaker = item.get("speaker") or "Speaker"
         role = item.get("role") or ""
         cards.append(
-            f'<section style="box-sizing:border-box;display:inline-block;vertical-align:top;width:86%;'
+            f'<section style="box-sizing:border-box;display:inline-block;vertical-align:top;width:92%;'
             f'max-width:340px;min-height:220px;margin:8px 12px 8px 0;padding:16px 16px 14px;white-space:normal;'
             f'border:1px solid {BORDER};border-radius:8px;background:#ffffff;">'
             f'<p style="margin:0;color:{MUTED};font-size:12px;line-height:1.4;text-align:right;">{card_index}/{total}</p>'

@@ -29,7 +29,10 @@ def configure_stdio() -> None:
 
 
 def slug(value: str) -> str:
-    cleaned = re.sub(r'[<>:"/\\|?*\x00-\x1f]+', "_", value).strip(" ._")
+    value = re.sub(r'["“”‘’`´]+', "_", value)
+    value = value.replace("：", "_").replace("、", "_")
+    cleaned = re.sub(r'[<>:"/\\|?*\x00-\x1f]+', "_", value)
+    cleaned = re.sub(r"_+", "_", cleaned).strip(" ._")
     return cleaned[:90] or "material"
 
 

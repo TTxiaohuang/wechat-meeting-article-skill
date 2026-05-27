@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
+dist/
+_skill_test/
+*.log
+.env
+*.secret
+secrets.*
+tokens.*
+credentials.*
+meeting-materials/
+raw-materials/
+recordings/
+transcripts-private/

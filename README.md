@@ -52,7 +52,19 @@ The workflow is intentionally file-based so it does not depend on a single agent
 
 ## Render HTML
 
-After an agent creates `article.json`, run:
+Extract materials first when the input folder contains binary documents:
+
+```powershell
+python skills\wechat-meeting-article\scripts\extract_materials.py D:\meeting-materials --out extracted_materials
+```
+
+Create a valid starter JSON when needed:
+
+```powershell
+python skills\wechat-meeting-article\scripts\create_article_json.py --out article.json
+```
+
+After an agent fills `article.json`, run:
 
 ```powershell
 python skills\wechat-meeting-article\scripts\render_wechat_article.py article.json --out dist
@@ -64,6 +76,8 @@ Outputs:
 dist/article.wechat.html
 dist/article.preview.html
 ```
+
+For manual WeChat import, open `dist/article.preview.html` in a browser and copy the rendered rich text. Do not paste the raw HTML source directly into the WeChat editor.
 
 ## Notes
 

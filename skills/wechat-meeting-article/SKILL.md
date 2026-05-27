@@ -12,9 +12,9 @@ Use this skill to produce a publication-ready WeChat Official Account draft from
 ## Workflow
 
 1. Inventory the input folder and identify available materials: transcript, English speeches, paper PDFs or abstracts, PPT files, policy notes, comments, images, and meeting metadata.
-2. Extract source text with appropriate local tools. Preserve speaker names, paper titles, DOI/URL fields, slide titles, and timestamps when available.
+2. Extract source text before writing. For `.docx`, `.pptx`, and `.pdf`, do not rely on raw file reads; use `scripts/extract_materials.py` or equivalent document parsers. Preserve speaker names, paper titles, DOI/URL fields, slide titles, and timestamps when available.
 3. Build source-grounded notes before writing. Do not invent attendees, papers, opinions, conclusions, or citations.
-4. Generate `article.json` using `references/input-contract.md`.
+4. Create a valid `article.json` using `references/input-contract.md`. Prefer generating it with `scripts/create_article_json.py` and editing the JSON values instead of hand-writing JSON from scratch.
 5. Render HTML:
 
 ```bash
@@ -22,7 +22,28 @@ python scripts/render_wechat_article.py path/to/article.json --out dist
 ```
 
 6. Review `dist/article.preview.html` for reading order, missing fields, overlong cards, and mobile layout. Fix `article.json` and rerun the renderer.
-7. Deliver `article.wechat.html` as the primary publishable artifact. Only create a WeChat platform draft when credentials and API access are explicitly available.
+7. Tell the user to import by opening `article.preview.html` in a browser, selecting the rendered page, and copying the rendered rich text into WeChat. Do not tell them to paste the raw `article.wechat.html` source into the WeChat editor.
+8. Deliver `article.wechat.html` as the primary HTML artifact. Only create a WeChat platform draft when credentials and API access are explicitly available.
+
+## Dependency Setup
+
+The renderer only needs Python 3 standard library. Material extraction needs optional parsers:
+
+```bash
+python -m pip install python-docx python-pptx pdfplumber pypdf
+```
+
+On Windows, set UTF-8 output if Chinese text becomes garbled:
+
+```powershell
+$env:PYTHONIOENCODING="utf-8"
+```
+
+For a local extraction pass:
+
+```bash
+python scripts/extract_materials.py path/to/material-folder --out extracted_materials
+```
 
 ## Output Policy
 
@@ -47,8 +68,11 @@ Prefer "create draft, then human review" over direct publishing. Do not directly
 ## Resource Guide
 
 - Read `references/input-contract.md` when creating or validating `article.json`.
+- Read `references/material-extraction.md` when the task includes `.docx`, `.pptx`, `.pdf`, `.txt`, or `.md` materials.
 - Read `references/wechat-formatting.md` when adjusting HTML, SVG, card layout, or editor compatibility.
 - Read `references/wechat-api.md` only when the task involves creating a WeChat draft or uploading images/materials.
+- Use `scripts/extract_materials.py` to create Markdown text extracts and `materials_manifest.json`.
+- Use `scripts/create_article_json.py` to create a valid starter JSON file.
 - Use `scripts/render_wechat_article.py` for deterministic HTML output.
 - Use `assets/article-template.html` as the HTML template if the renderer needs visual changes.
 

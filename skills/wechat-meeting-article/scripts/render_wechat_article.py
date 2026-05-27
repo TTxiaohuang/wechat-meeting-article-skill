@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import html
 import json
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -15,6 +16,12 @@ TEXT = "#243042"
 MUTED = "#6b7280"
 SOFT = "#eef7fa"
 BORDER = "#d9e8ee"
+
+
+def configure_stdio() -> None:
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8")
 
 
 def esc(value: Any) -> str:
@@ -145,12 +152,30 @@ def render_article(article: dict[str, Any]) -> str:
 
 
 def main() -> None:
+    configure_stdio()
     parser = argparse.ArgumentParser()
     parser.add_argument("article_json", type=Path)
     parser.add_argument("--out", type=Path, default=Path("dist"))
     args = parser.parse_args()
 
-    article = json.loads(args.article_json.read_text(encoding="utf-8-sig"))
+    try:
+        article = json.loads(args.article_json.read_text(encoding="utf-8-sig"))
+    except json.JSONDecodeError as exc:
+        lines = args.article_json.read_text(encoding="utf-8-sig").splitlines()
+        bad_line = lines[exc.lineno - 1] if 0 <= exc.lineno - 1 < len(lines) else ""
+        print(
+            f"Invalid JSON in {args.article_json} at line {exc.lineno}, column {exc.colno}: {exc.msg}",
+            file=sys.stderr,
+        )
+        if bad_line:
+            print(bad_line, file=sys.stderr)
+            print(" " * (max(exc.colno - 1, 0)) + "^", file=sys.stderr)
+        print(
+            "Tip: create article.json with scripts/create_article_json.py or Python json.dump. "
+            "Do not handwrite unescaped quotes inside JSON strings.",
+            file=sys.stderr,
+        )
+        raise SystemExit(2) from exc
     skill_dir = Path(__file__).resolve().parents[1]
     template = (skill_dir / "assets" / "article-template.html").read_text(encoding="utf-8")
     body = template.replace("{{content}}", render_article(article))

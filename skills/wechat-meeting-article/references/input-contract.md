@@ -2,6 +2,14 @@
 
 Create `article.json` with UTF-8 encoding. Required top-level keys are `meta`, `sections`, and optionally `assets`.
 
+Prefer creating the starter file with:
+
+```bash
+python scripts/create_article_json.py --out article.json
+```
+
+Then edit values while preserving JSON syntax.
+
 ## Minimal Example
 
 ```json
@@ -85,3 +93,5 @@ Create `article.json` with UTF-8 encoding. Required top-level keys are `meta`, `
 - Put incomplete or uncertain fields as empty strings and add a note in `source_trace.md`.
 - If source materials conflict, preserve the conflict in notes and ask for confirmation instead of silently merging.
 - Keep source paths relative to the input material folder when possible.
+- JSON requires standard double quotes around keys and string values. Do not paste unescaped quotes inside strings. For example, write `围绕'最近最想做的事情'展开分享` or escape quotes as `围绕\"最近最想做的事情\"展开分享`.
+- Do not handwrite large JSON blocks when a script can generate them. Use `json.dumps(..., ensure_ascii=False, indent=2)` in Python when building `article.json` programmatically.

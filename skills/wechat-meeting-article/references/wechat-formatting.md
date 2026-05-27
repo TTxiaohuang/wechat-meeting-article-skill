@@ -8,6 +8,23 @@ WeChat Official Account articles are mobile-first and the editor may filter HTML
 2. Safer automation: create a WeChat draft through the API, then preview and manually publish.
 3. Avoid direct automatic publishing unless the user explicitly asks and accepts the operational risk.
 
+## Import Into WeChat
+
+Do not paste the raw source code from `article.wechat.html` into the WeChat editor. That may show visible HTML code.
+
+Recommended manual import:
+
+1. Open `article.preview.html` in a browser.
+2. Select the rendered article content in the browser.
+3. Copy the rendered rich text.
+4. Paste into the WeChat Official Account editor.
+5. Preview on mobile before publishing.
+
+Alternative workflow:
+
+- Import or paste `article.wechat.html` into doocs/md, 135 editor, Xiumi, or another WeChat editor that supports HTML source import.
+- Recheck horizontal cards and comments after import because editors may sanitize styles.
+
 ## Layout Rules
 
 - Use inline styles only.

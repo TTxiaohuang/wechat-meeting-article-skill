@@ -21,6 +21,54 @@ BORDER = "#d9e8ee"
 LINE = "#e7edf0"
 BRAND_GREEN = "#0f9f76"
 BRAND_GOLD = "#b58a3a"
+CURRENT_TEMPLATE = "classic"
+CURRENT_PALETTE = "classic"
+
+PALETTES: dict[str, dict[str, str]] = {
+    "classic": {
+        "accent": "#256f8f",
+        "accent_2": "#7a6f45",
+        "soft": "#eef7fa",
+        "warm": "#faf7ef",
+        "border": "#d9e8ee",
+        "line": "#e7edf0",
+    },
+    "forest": {
+        "accent": "#2f6f5e",
+        "accent_2": "#9a7b3f",
+        "soft": "#eef8f3",
+        "warm": "#fff8e6",
+        "border": "#d6ebe2",
+        "line": "#e6eee8",
+    },
+    "blueprint": {
+        "accent": "#2f5f8f",
+        "accent_2": "#687545",
+        "soft": "#eef5fb",
+        "warm": "#f7f8ef",
+        "border": "#d7e5f2",
+        "line": "#e4ecf5",
+    },
+    "warm": {
+        "accent": "#8a5a44",
+        "accent_2": "#2f6f5e",
+        "soft": "#f7f1ec",
+        "warm": "#fff8e8",
+        "border": "#eadbd2",
+        "line": "#efe5de",
+    },
+}
+
+TEMPLATE_ALIASES = {
+    "default": "classic",
+    "intro": "classic",
+    "simple": "classic",
+    "brief": "briefing",
+    "report": "briefing",
+    "reading-note": "notebook",
+    "notes": "notebook",
+}
+SUPPORTED_TEMPLATES = {"classic", "notebook", "briefing", "fieldnote"}
 
 
 def configure_stdio() -> None:
@@ -31,6 +79,32 @@ def configure_stdio() -> None:
 
 def esc(value: Any) -> str:
     return html.escape(str(value or ""), quote=True)
+
+
+def normalize_choice(value: Any, allowed: set[str], default: str, aliases: dict[str, str] | None = None) -> str:
+    choice = str(value or "").strip().lower().replace("_", "-")
+    if aliases:
+        choice = aliases.get(choice, choice)
+    return choice if choice in allowed else default
+
+
+def apply_visual_style(article: dict[str, Any]) -> tuple[str, str]:
+    global ACCENT, ACCENT_2, SOFT, WARM, BORDER, LINE, CURRENT_TEMPLATE, CURRENT_PALETTE
+
+    meta = article.get("meta") or {}
+    template = normalize_choice(article.get("template") or meta.get("template"), SUPPORTED_TEMPLATES, "classic", TEMPLATE_ALIASES)
+    palette = normalize_choice(article.get("palette") or meta.get("palette") or template, set(PALETTES), "classic")
+    colors = PALETTES[palette]
+
+    ACCENT = colors["accent"]
+    ACCENT_2 = colors["accent_2"]
+    SOFT = colors["soft"]
+    WARM = colors["warm"]
+    BORDER = colors["border"]
+    LINE = colors["line"]
+    CURRENT_TEMPLATE = template
+    CURRENT_PALETTE = palette
+    return template, palette
 
 
 def paragraphs(text: str, *, size: int = 15, margin_top: int = 8) -> str:
@@ -105,10 +179,43 @@ def h2(title: str, index: int | None = None, branded: bool = False) -> str:
         if number
         else ""
     )
+    title_html = f'{number_html}{brand_section_mark() if branded else ""}{esc(title)}'
+    if CURRENT_TEMPLATE == "notebook":
+        return (
+            f'<section style="margin:30px 0 14px;padding:10px 12px;border-left:4px solid {ACCENT};'
+            f'background:{SOFT};border-radius:0 8px 8px 0;">'
+            f'<p style="margin:0;color:{TEXT};font-size:19px;font-weight:800;line-height:1.45;">'
+            f'{title_html}</p>'
+            "</section>"
+        )
+    if CURRENT_TEMPLATE == "briefing":
+        number_chip = (
+            f'<span style="display:inline-block;margin-right:9px;padding:1px 7px;border-radius:999px;'
+            f'background:{ACCENT};color:#ffffff;font-size:12px;font-weight:800;line-height:1.6;">{number}</span>'
+            if number
+            else ""
+        )
+        return (
+            f'<section style="margin:30px 0 14px;padding:9px 0 8px;border-top:2px solid {ACCENT};'
+            f'border-bottom:1px solid {LINE};">'
+            f'<p style="margin:0;color:{TEXT};font-size:19px;font-weight:800;line-height:1.45;">'
+            f'{number_chip}{brand_section_mark() if branded else ""}{esc(title)}</p>'
+            "</section>"
+        )
+    if CURRENT_TEMPLATE == "fieldnote":
+        return (
+            f'<section style="margin:30px 0 14px;padding:0;">'
+            f'<p style="margin:0 0 5px;color:{ACCENT_2};font-size:12px;font-weight:800;line-height:1.4;">'
+            f'{number or "NOTE"}</p>'
+            f'<p style="margin:0;color:{TEXT};font-size:19px;font-weight:800;line-height:1.45;">'
+            f'{brand_section_mark() if branded else ""}{esc(title)}</p>'
+            f'<p style="margin:8px 0 0;border-top:1px solid {LINE};border-bottom:1px solid {LINE};height:3px;"></p>'
+            "</section>"
+        )
     return (
         '<section style="margin:30px 0 14px;padding:0 0 8px;border-bottom:1px solid #eef2f4;">'
         f'<p style="margin:0;color:{TEXT};font-size:19px;font-weight:800;line-height:1.45;">'
-        f'{number_html}{brand_section_mark() if branded else ""}{esc(title)}</p>'
+        f'{title_html}</p>'
         f'<p style="margin:7px 0 0;width:44px;border-top:3px solid {ACCENT};"></p>'
         "</section>"
     )
@@ -171,6 +278,33 @@ def render_image(image: dict[str, Any] | str) -> str:
 
 def render_section_images(images: list[Any]) -> str:
     return "".join(render_image(image) for image in images or [])
+
+
+def render_summary_card(summary: str) -> str:
+    if not summary:
+        return ""
+    if CURRENT_TEMPLATE == "briefing":
+        return (
+            f'<section style="margin:12px 0 4px;padding:13px 14px;border-top:2px solid {ACCENT_2};'
+            f'border-bottom:1px solid {LINE};background:{WARM};">'
+            f'<p style="margin:0;color:{ACCENT_2};font-size:14px;font-weight:800;line-height:1.5;">本期导读</p>'
+            f'{paragraphs(summary, size=14, margin_top=5)}'
+            "</section>"
+        )
+    if CURRENT_TEMPLATE == "fieldnote":
+        return (
+            f'<section style="margin:12px 0 4px;padding:12px 0;border-top:1px solid {LINE};border-bottom:1px solid {LINE};">'
+            f'<p style="margin:0;color:{ACCENT_2};font-size:14px;font-weight:800;line-height:1.5;">本期导读</p>'
+            f'{paragraphs(summary, size=14, margin_top=5)}'
+            "</section>"
+        )
+    return (
+        f'<section style="margin:12px 0 4px;padding:13px 14px;border-radius:8px;'
+        f'background:{WARM};border:1px solid #efe6cf;">'
+        f'<p style="margin:0;color:{ACCENT_2};font-size:14px;font-weight:800;line-height:1.5;">本期导读</p>'
+        f'{paragraphs(summary, size=14, margin_top=5)}'
+        "</section>"
+    )
 
 
 def render_english(data: dict[str, Any], index: int, branded: bool = False) -> str:
@@ -291,10 +425,14 @@ def render_free_discussion(data: dict[str, Any], index: int, branded: bool = Fal
 
 
 def render_article(article: dict[str, Any]) -> str:
+    template_name, palette_name = apply_visual_style(article)
     meta = article.get("meta") or {}
     sections = article.get("sections") or {}
     branded = brand_enabled(article)
-    parts = []
+    parts = [
+        f'<section data-template="{esc(template_name)}" data-palette="{esc(palette_name)}" '
+        f'style="margin:0;padding:0;">'
+    ]
     parts.extend([
         f'<h1 style="margin:0 0 10px;color:{TEXT};font-size:23px;line-height:1.35;font-weight:800;">'
         f'{esc(meta.get("title") or "组会纪要")}</h1>',
@@ -306,13 +444,7 @@ def render_article(article: dict[str, Any]) -> str:
     if cover:
         parts.append(render_image({"url": cover, "caption": meta.get("cover_caption") or ""}))
     if meta.get("summary"):
-        parts.append(
-            f'<section style="margin:12px 0 4px;padding:13px 14px;border-radius:8px;'
-            f'background:{WARM};border:1px solid #efe6cf;">'
-            f'<p style="margin:0;color:{ACCENT_2};font-size:14px;font-weight:800;line-height:1.5;">本期导读</p>'
-            f'{paragraphs(meta.get("summary") or "", size=14, margin_top=5)}'
-            "</section>"
-        )
+        parts.append(render_summary_card(meta.get("summary") or ""))
 
     section_order = [
         ("english_exchange", render_english),
@@ -327,6 +459,7 @@ def render_article(article: dict[str, Any]) -> str:
             visible_index += 1
     if branded:
         parts.append(render_brand_signature(meta))
+    parts.append("</section>")
     return "".join(parts)
 
 

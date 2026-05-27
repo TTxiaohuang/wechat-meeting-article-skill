@@ -20,7 +20,12 @@
 
 当前版本默认会保留英语发言原文，不在正文中显示本地 source 文件名，并把文献分享整理成“研究背景、研究问题、方法与数据、核心发现、讨论价值、讨论摘录”等阅读笔记式结构。
 
-默认主题为 `zhengeryanzi`，会加入章节 SVG 小标记和结尾签名。默认不使用顶部大品牌卡或复杂动画，优先保证微信公众号编辑器兼容性。
+默认主题为 `zhengeryanzi`，会加入章节 SVG 小标记和结尾签名。默认简介模板为 `template: "classic"`，不使用顶部大品牌卡或复杂动画，优先保证微信公众号编辑器兼容性。
+
+可选模板和配色：
+
+- `template`: `classic`（默认简介模板）、`notebook`（阅读笔记感）、`briefing`（汇报简报感）、`fieldnote`（轻量田野笔记感）
+- `palette`: `classic`（蓝灰+暖色导读）、`forest`（学术绿）、`blueprint`（简报蓝）、`warm`（暖棕+绿）
 
 ## 仓库结构
 
@@ -169,6 +174,7 @@ python skills\wechat-meeting-article\scripts\check_article_json.py article.json 
 - 图片使用：优先使用用户提供的会议照片、PPT 截图、论文图示或封面图；不要编造数据图和论文图。
 - 章节灵活：没有时政交流或某个环节时，直接省略，不硬凑模板。
 - 品牌视觉：默认使用 `theme: zhengeryanzi` 的静态品牌视觉；SVG 动画和交互效果应作为实验功能单独测试。
+- 模板选择：默认保留 `template: classic`；需要变化时可改为 `notebook`、`briefing` 或 `fieldnote`，并搭配 `palette` 控制整体配色。
 - 署名信息：建议在 `meta.host` 和 `meta.editor` 中填写主持人和推文编辑，结尾会显示为“主持：... ｜ 推文编辑：...”。
 - 图片添加：把图片放入 `cover_image`、章节 `images` 或文献 `images`。微信公众号正式发布时，图片最好先上传到公众号/排版编辑器，再使用稳定 URL 或在编辑器中手动替换。
 

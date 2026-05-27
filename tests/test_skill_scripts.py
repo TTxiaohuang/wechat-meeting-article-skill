@@ -208,6 +208,62 @@ class SkillScriptTests(unittest.TestCase):
             self.assertNotIn("资产评估学习与组会记录", html)
             self.assertNotIn("以阅读记录讨论，以讨论沉淀研究", html)
 
+    def test_renderer_supports_template_and_palette_choices(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            article = {
+                "theme": "zhengeryanzi",
+                "template": "notebook",
+                "palette": "forest",
+                "meta": {"title": "测试组会纪要", "summary": "本期导读"},
+                "sections": {
+                    "free_discussion": {
+                        "title": "自由讨论与会议总结",
+                        "items": [{"speaker": "老师", "text": "讨论围绕研究方法展开。"}],
+                    }
+                },
+            }
+            article_path = tmp_path / "article.json"
+            out_dir = tmp_path / "dist"
+            article_path.write_text(json.dumps(article, ensure_ascii=False), encoding="utf-8")
+
+            result = run_script("render_wechat_article.py", str(article_path), "--out", str(out_dir))
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            html = (out_dir / "article.wechat.html").read_text(encoding="utf-8")
+            self.assertIn('data-template="notebook"', html)
+            self.assertIn('data-palette="forest"', html)
+            self.assertIn("#2f6f5e", html)
+            self.assertIn("border-left:4px solid", html)
+
+    def test_renderer_supports_briefing_template(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            article = {
+                "theme": "zhengeryanzi",
+                "template": "briefing",
+                "palette": "blueprint",
+                "meta": {"title": "测试组会纪要", "summary": "本期导读"},
+                "sections": {
+                    "english_exchange": {
+                        "title": "英语交流",
+                        "speeches": [{"speaker": "Luna", "text": "I want to keep learning steadily."}],
+                    }
+                },
+            }
+            article_path = tmp_path / "article.json"
+            out_dir = tmp_path / "dist"
+            article_path.write_text(json.dumps(article, ensure_ascii=False), encoding="utf-8")
+
+            result = run_script("render_wechat_article.py", str(article_path), "--out", str(out_dir))
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            html = (out_dir / "article.wechat.html").read_text(encoding="utf-8")
+            self.assertIn('data-template="briefing"', html)
+            self.assertIn('data-palette="blueprint"', html)
+            self.assertIn("#2f5f8f", html)
+            self.assertIn("border-top:2px solid", html)
+
 
 if __name__ == "__main__":
     unittest.main()

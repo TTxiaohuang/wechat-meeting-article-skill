@@ -12,7 +12,7 @@ Use this skill to produce a publication-ready WeChat Official Account draft from
 ## Workflow
 
 1. Inventory the input folder and identify available materials: transcript, English speeches, paper PDFs or abstracts, PPT files, policy notes, comments, images, and meeting metadata.
-2. Ask for missing publication metadata before drafting when not obvious: meeting date, host, article editor, whether the user has images to include, and whether they prefer a plain or lightly decorated style. Do not keep asking once these are clear or unavailable.
+2. Ask for missing publication metadata before drafting when not obvious: meeting date, host, article editor, whether the user has images to include, and whether they prefer `classic`, `notebook`, `briefing`, or `fieldnote` layout. Do not keep asking once these are clear or unavailable.
 3. Extract source text before writing. For `.docx`, `.pptx`, and `.pdf`, do not rely on raw file reads; use `scripts/extract_materials.py` or equivalent document parsers. Preserve speaker names, paper titles, DOI/URL fields, slide titles, and timestamps when available.
 4. Build source-grounded notes before writing. Do not invent attendees, papers, opinions, conclusions, or citations.
 5. Apply `references/editorial-style.md` before drafting. Keep sections flexible: omit unsupported sections instead of filling them with generic text.
@@ -74,6 +74,7 @@ Prefer "create draft, then human review" over direct publishing. Do not directly
 - Use provided meeting photos, PPT screenshots, paper figures, or generated cover assets when available and relevant. Do not invent data-bearing academic figures.
 - If no usable images are provided, include image placement suggestions in the final response or `source_trace.md` instead of fabricating figures.
 - Keep the default `zhengeryanzi` theme restrained: no top brand card, static section marks, subtle dividers, and a closing signature with host/editor credits.
+- Use `template: "classic"` as the default concise/intro layout. Offer `notebook`, `briefing`, or `fieldnote` when the user wants visual variation; pair with one palette from `classic`, `forest`, `blueprint`, or `warm`.
 
 ## Resource Guide
 

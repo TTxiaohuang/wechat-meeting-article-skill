@@ -56,6 +56,20 @@ Do not invent data charts, regression tables, or paper figures. If no suitable i
 
 Use `"theme": "zhengeryanzi"` for the default account style. The renderer adds small inline SVG section marks and a closing signature. Do not add a large top brand card by default. Keep decorations static because WeChat editor compatibility is more predictable than animated SVG interactions.
 
+Template choices:
+
+- `classic`: default concise intro layout; closest to the current stable style.
+- `notebook`: reading-note style with soft section bands and a left accent rule.
+- `briefing`: more report-like, with stronger section dividers and number chips.
+- `fieldnote`: light field-note style with airy double dividers and minimal boxes.
+
+Palette choices:
+
+- `classic`: muted blue plus warm note color.
+- `forest`: academic green and soft cream.
+- `blueprint`: blue report tone.
+- `warm`: restrained brown/green reading-note tone.
+
 Only use SVG animation or interaction when the user explicitly asks for an experimental version and agrees to test it in WeChat preview.
 
 For the closing signature, prefer `meta.host` and `meta.editor`, rendered as "主持：..." and "推文编辑：...". Do not use a generic slogan when credit metadata is available.

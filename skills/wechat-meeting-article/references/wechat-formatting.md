@@ -73,3 +73,4 @@ Use a restrained academic style:
 - Section headers: clear but compact.
 - Quotes/comments: left border or subtle background, not oversized decorative cards.
 - For the `zhengeryanzi` theme, keep inline SVG decorations static and restrained: section marks and closing signature. Avoid a large top brand card. Avoid animation unless explicitly requested and preview-tested.
+- Supported layouts are `classic`, `notebook`, `briefing`, and `fieldnote`; supported palettes are `classic`, `forest`, `blueprint`, and `warm`. These are inline-style variants intended to survive WeChat editor import.

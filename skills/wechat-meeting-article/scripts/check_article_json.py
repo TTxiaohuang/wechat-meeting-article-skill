@@ -36,6 +36,38 @@ def check_literature(article: dict[str, Any]) -> list[str]:
     return issues
 
 
+def visible_text_length(article: dict[str, Any]) -> int:
+    total = 0
+
+    def walk(value: Any, key: str = "") -> None:
+        nonlocal total
+        if key in {"source", "cover_image", "url", "src", "path", "doi"}:
+            return
+        if isinstance(value, str):
+            total += len(value.strip())
+        elif isinstance(value, list):
+            for item in value:
+                walk(item)
+        elif isinstance(value, dict):
+            for child_key, child_value in value.items():
+                if child_key == "_meta":
+                    continue
+                walk(child_value, child_key)
+
+    walk(article)
+    return total
+
+
+def check_scaffold_and_length(article: dict[str, Any], min_chars: int) -> list[str]:
+    issues: list[str] = []
+    if article.get("_meta", {}).get("scaffold_generated"):
+        issues.append("scaffold-generated article must be expanded before delivery")
+    length = visible_text_length(article)
+    if length < min_chars:
+        issues.append(f"article appears too short: {length} visible chars, expected at least {min_chars}")
+    return issues
+
+
 def check_english(article: dict[str, Any]) -> list[str]:
     issues: list[str] = []
     speeches = article.get("sections", {}).get("english_exchange", {}).get("speeches", [])
@@ -61,10 +93,12 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("article_json", type=Path)
     parser.add_argument("--html", type=Path)
+    parser.add_argument("--min-chars", type=int, default=1200)
     args = parser.parse_args()
 
     article = load_json(args.article_json)
     issues = []
+    issues.extend(check_scaffold_and_length(article, args.min_chars))
     issues.extend(check_literature(article))
     issues.extend(check_english(article))
     issues.extend(check_html(args.html))

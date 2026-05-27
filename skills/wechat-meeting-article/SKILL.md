@@ -15,7 +15,7 @@ Use this skill to produce a publication-ready WeChat Official Account draft from
 2. Extract source text before writing. For `.docx`, `.pptx`, and `.pdf`, do not rely on raw file reads; use `scripts/extract_materials.py` or equivalent document parsers. Preserve speaker names, paper titles, DOI/URL fields, slide titles, and timestamps when available.
 3. Build source-grounded notes before writing. Do not invent attendees, papers, opinions, conclusions, or citations.
 4. Apply `references/editorial-style.md` before drafting. Keep sections flexible: omit unsupported sections instead of filling them with generic text.
-5. Create `article.json`. Prefer `scripts/draft_article_from_materials.py extracted_materials --out article.json` for a rough first draft, then revise it against the sources. Use `scripts/create_article_json.py` only when starting from a blank template.
+5. Create `article.json` with AI synthesis from the extracted materials and `references/input-contract.md`. Do not deliver deterministic scaffold output directly. Use `scripts/draft_article_from_materials.py extracted_materials --out article.scaffold.json` only as an optional inventory/scaffold aid, then write a separate expanded `article.json` from the sources.
 6. Render HTML:
 
 ```bash
@@ -81,7 +81,7 @@ Prefer "create draft, then human review" over direct publishing. Do not directly
 - Read `references/wechat-formatting.md` when adjusting HTML, SVG, card layout, or editor compatibility.
 - Read `references/wechat-api.md` only when the task involves creating a WeChat draft or uploading images/materials.
 - Use `scripts/extract_materials.py` to create Markdown text extracts and `materials_manifest.json`.
-- Use `scripts/draft_article_from_materials.py` to create a rough editable `article.json` from extracted Markdown materials.
+- Use `scripts/draft_article_from_materials.py` only to create `article.scaffold.json` as an inventory/scaffold aid. Never treat scaffold output as the final article.
 - Use `scripts/create_article_json.py` to create a valid starter JSON file.
 - Use `scripts/render_wechat_article.py` for deterministic HTML output.
 - Use `scripts/check_article_json.py` before delivery to catch source filename leaks, missing literature structure, and suspiciously short English speeches.

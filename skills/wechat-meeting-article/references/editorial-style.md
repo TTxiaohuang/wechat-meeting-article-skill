@@ -9,6 +9,7 @@ Use this reference before drafting or revising the article content.
 3. Keep source filenames and local paths out of the visible article.
 4. Use flexible sections: omit unsupported meeting sections instead of forcing a template.
 5. Keep `source_trace.md` detailed enough for verification.
+6. Treat deterministic scaffold files as inventory aids only. The final article must be synthesized by reading the extracted materials.
 
 ## English Exchange
 
@@ -30,6 +31,15 @@ For each paper, write a substantive but concise academic introduction. Prefer th
 - `comments`: student/teacher views from the meeting
 
 Avoid vague lines such as "this paper has important reference value" unless followed by specifics. Do not overclaim causal conclusions when the paper design does not support them.
+
+## Completeness Checks
+
+Before rendering, compare the final article against the extracted materials:
+
+- If the English draft contains many speakers but `article.json` only contains one or two, revisit the extraction and do not publish.
+- If a transcript is long but the final free discussion contains only one generic sentence, revisit the transcript.
+- If paper extracts are thousands of characters but each paper section contains only a few short lines, expand the literature notes.
+- If `article.json` contains `_meta.scaffold_generated`, rewrite it into a final article JSON before rendering.
 
 ## Visual Materials
 

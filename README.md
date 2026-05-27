@@ -97,13 +97,17 @@ extracted_materials/
 
 脚本会安全化输出文件名，避免中文引号、路径分隔符等特殊字符导致 Agent 或 shell 读取失败。原始文件名会保留在 `materials_manifest.json` 中。
 
-### 3. 生成 article.json 初稿
+### 3. 编写 article.json
 
-推荐从提取材料自动生成半成品：
+默认做法：让 Agent 阅读 `extracted_materials/` 中的材料，根据 `SKILL.md` 和 `references/input-contract.md` 写出完整的 `article.json`。
+
+如果需要一个材料清单式脚手架，可以生成 `article.scaffold.json`：
 
 ```powershell
-python skills\wechat-meeting-article\scripts\draft_article_from_materials.py extracted_materials --out article.json
+python skills\wechat-meeting-article\scripts\draft_article_from_materials.py extracted_materials --out article.scaffold.json
 ```
+
+注意：`article.scaffold.json` 不是成稿，不能直接发布。它由确定性规则生成，可能严重遗漏英语发言、文献介绍和讨论观点。最终必须由 Agent 阅读材料后扩写成单独的 `article.json`。
 
 如果想从空模板开始：
 
@@ -111,7 +115,7 @@ python skills\wechat-meeting-article\scripts\draft_article_from_materials.py ext
 python skills\wechat-meeting-article\scripts\create_article_json.py --out article.json
 ```
 
-自动初稿只是为了减少手动整理量，仍需要 Agent 或人工根据原始材料校对、补写和润色。
+空模板或 scaffold 都只是辅助工具。最终 `article.json` 应当体现 AI 对材料的完整阅读、归纳和写作。
 
 ### 4. 渲染微信公众号 HTML
 
@@ -137,6 +141,8 @@ python skills\wechat-meeting-article\scripts\check_article_json.py article.json 
 - 正文是否泄露 `.docx`、`.pdf`、`.pptx` 等 source 文件名
 - 文献分享是否缺少研究背景、研究问题、方法与数据、核心发现、讨论价值
 - 英语发言是否过短，可能没有保留完整原文
+- 是否误把 scaffold 当成最终稿
+- 正文字数是否异常偏少
 
 ### 6. 导入微信公众号
 

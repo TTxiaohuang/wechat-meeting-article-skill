@@ -62,11 +62,13 @@ class SkillScriptTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            out = tmp_path / "article.json"
+            out = tmp_path / "article.scaffold.json"
             result = run_script("draft_article_from_materials.py", str(materials), "--out", str(out))
 
             self.assertEqual(result.returncode, 0, result.stderr)
             article = json.loads(out.read_text(encoding="utf-8"))
+            self.assertTrue(article["_meta"]["scaffold_generated"])
+            self.assertIn("must be expanded", article["_meta"]["warning"])
             speeches = article["sections"]["english_exchange"]["speeches"]
             papers = article["sections"]["literature_sharing"]["papers"]
             self.assertEqual(speeches[0]["speaker"], "James")
@@ -75,11 +77,12 @@ class SkillScriptTests(unittest.TestCase):
             self.assertTrue(papers[0]["title"].startswith("链"))
             self.assertFalse(papers[0]["title"].lower().endswith(".pdf"))
 
-    def test_check_article_json_flags_source_leakage_and_missing_literature(self) -> None:
+    def test_check_article_json_flags_source_leakage_missing_literature_and_scaffold(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
             article = {
                 "meta": {"title": "测试", "summary": "摘要"},
+                "_meta": {"scaffold_generated": True},
                 "sections": {
                     "english_exchange": {
                         "speeches": [
@@ -99,8 +102,49 @@ class SkillScriptTests(unittest.TestCase):
             result = run_script("check_article_json.py", str(article_path), "--html", str(html_path))
 
             self.assertEqual(result.returncode, 1)
+            self.assertIn("scaffold-generated article", result.stdout)
             self.assertIn("visible source filename", result.stdout)
             self.assertIn("missing literature fields", result.stdout)
+
+    def test_check_article_json_flags_suspiciously_short_article(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            article = {
+                "meta": {"title": "测试", "summary": "短"},
+                "sections": {
+                    "english_exchange": {
+                        "speeches": [
+                            {
+                                "speaker": "A",
+                                "text": "This is a complete enough English paragraph for the checker to ignore.",
+                            },
+                            {
+                                "speaker": "B",
+                                "text": "This is another complete enough English paragraph for the checker to ignore.",
+                            },
+                        ]
+                    },
+                    "literature_sharing": {
+                        "papers": [
+                            {
+                                "title": "Paper",
+                                "background": "背景",
+                                "research_question": "问题",
+                                "methods_data": "方法",
+                                "findings": ["发现"],
+                                "discussion_value": "价值",
+                            }
+                        ]
+                    },
+                },
+            }
+            article_path = tmp_path / "article.json"
+            article_path.write_text(json.dumps(article, ensure_ascii=False), encoding="utf-8")
+
+            result = run_script("check_article_json.py", str(article_path), "--min-chars", "800")
+
+            self.assertEqual(result.returncode, 1)
+            self.assertIn("article appears too short", result.stdout)
 
     def test_renderer_uses_less_card_like_literature_blocks(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

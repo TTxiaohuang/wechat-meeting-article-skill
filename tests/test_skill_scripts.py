@@ -33,6 +33,15 @@ def run_script(script: str, *args: str, cwd: Path | None = None) -> subprocess.C
 
 
 class SkillScriptTests(unittest.TestCase):
+    def test_skill_intake_requires_staged_questions(self) -> None:
+        skill_text = (SKILL / "SKILL.md").read_text(encoding="utf-8")
+
+        self.assertIn("First message", skill_text)
+        self.assertIn("ask only for the material folder", skill_text)
+        self.assertIn("After inventory", skill_text)
+        self.assertIn("Ask at most three", skill_text)
+        self.assertIn("Do not list all intake fields", skill_text)
+
     def test_slug_replaces_quote_like_filename_characters(self) -> None:
         extract = load_module("extract_materials", SKILL / "scripts" / "extract_materials.py")
 

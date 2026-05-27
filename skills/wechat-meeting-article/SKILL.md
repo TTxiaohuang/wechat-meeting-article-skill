@@ -20,24 +20,33 @@ Before drafting, collect only the metadata that affects publication quality:
 - Preferred visual style, or explicit confirmation that the default `classic` style is acceptable.
 - Whether provided images, PPT screenshots, certificates, or cover assets should be used.
 
-Do not ask a long questionnaire, but do not skip editor and visual-style decisions. Infer obvious details from filenames, PPT titles, transcripts, or user-provided choices. Ask one confirmation question only when a detail is missing, sensitive, contradictory, or likely to change the article emphasis. Record decisions in `_meta.intake_gate`; if editor is intentionally omitted, set `_meta.intake_gate.editor.status` to `omitted_confirmed`.
+Use staged intake, not a questionnaire:
+
+- First message: ask only for the material folder, or ask the user to choose between providing a folder path and using an obvious current/default folder if one exists.
+- After inventory: summarize the discovered materials, infer date/host/images/style candidates from filenames, PPT titles, transcripts, and supplied files.
+- Ask at most three follow-up questions, and only for fields that cannot be inferred or have publication risk: editor credit, ambiguous date/host, sensitive images or certificates, unclear honor news, or a non-default visual preference.
+- Prefer short option-style questions when the client supports them. Example choices: `从素材推断 / 我来提供 / 留空确认`; `使用默认 classic / campus / notebook`.
+- Do not list all intake fields in the opening message. Do not ask for host, date, images, editor, and visual style all at once before inspecting the folder.
+
+Do not skip editor and visual-style decisions. Infer obvious details from filenames, PPT titles, transcripts, or user-provided choices. Ask one confirmation question only when a detail is missing, sensitive, contradictory, or likely to change the article emphasis. Record decisions in `_meta.intake_gate`; if editor is intentionally omitted, set `_meta.intake_gate.editor.status` to `omitted_confirmed`.
 
 ## Workflow
 
-1. Inventory the input folder and identify available materials: transcript, English speeches, paper PDFs or abstracts, PPT files, policy notes, comments, images, certificates, honor-news documents, and meeting metadata.
-2. Apply the Intake Gate. Do not keep asking once details are clear, inferable, or the user has accepted defaults.
-3. Extract source text before writing. For `.docx`, `.pptx`, and `.pdf`, do not rely on raw file reads; use `scripts/extract_materials.py` or equivalent document parsers. PDFs are extracted in full by default; read selectively from the extracted text instead of stuffing entire long papers into context. Preserve speaker names, paper titles, DOI/URL fields, slide titles, and timestamps when available.
-4. Create intermediate notes before drafting:
+1. Apply the first Intake Gate step: get the material folder only.
+2. Inventory the input folder and identify available materials: transcript, English speeches, paper PDFs or abstracts, PPT files, policy notes, comments, images, certificates, honor-news documents, and meeting metadata.
+3. Apply the post-inventory Intake Gate. Do not keep asking once details are clear, inferable, or the user has accepted defaults.
+4. Extract source text before writing. For `.docx`, `.pptx`, and `.pdf`, do not rely on raw file reads; use `scripts/extract_materials.py` or equivalent document parsers. PDFs are extracted in full by default; read selectively from the extracted text instead of stuffing entire long papers into context. Preserve speaker names, paper titles, DOI/URL fields, slide titles, and timestamps when available.
+5. Create intermediate notes before drafting:
 
 ```bash
 python scripts/prepare_article_notes.py extracted_materials --out article_notes
 ```
 
 Read `article_notes/paper_notes.json`, `article_notes/transcript_notes.json`, and `article_notes/intake_decision.template.json` first. For long extracted files, use the notes as an index and reopen only relevant excerpts instead of reading every extracted character into context.
-5. Scan extracted materials and notes for optional inserts such as honor news, announcements, project milestones, paper acceptances, activity notices, or supplied photos. Auto-include clearly publication-ready inserts; ask one confirmation question when they are ambiguous, sensitive, or incomplete.
-6. Build source-grounded notes before writing. Do not invent attendees, papers, opinions, conclusions, awards, or citations.
-7. Apply `references/editorial-style.md` before drafting. Keep sections flexible: omit unsupported sections instead of filling them with generic text.
-8. Create `article.json` with AI synthesis from the extracted materials and `references/input-contract.md`. Do not deliver deterministic scaffold output directly. Use `scripts/draft_article_from_materials.py extracted_materials --out article.scaffold.json` only as an optional inventory/scaffold aid.
+6. Scan extracted materials and notes for optional inserts such as honor news, announcements, project milestones, paper acceptances, activity notices, or supplied photos. Auto-include clearly publication-ready inserts; ask one confirmation question when they are ambiguous, sensitive, or incomplete.
+7. Build source-grounded notes before writing. Do not invent attendees, papers, opinions, conclusions, awards, or citations.
+8. Apply `references/editorial-style.md` before drafting. Keep sections flexible: omit unsupported sections instead of filling them with generic text.
+9. Create `article.json` with AI synthesis from the extracted materials and `references/input-contract.md`. Do not deliver deterministic scaffold output directly. Use `scripts/draft_article_from_materials.py extracted_materials --out article.scaffold.json` only as an optional inventory/scaffold aid.
 
 If the agent can reliably create UTF-8 Python files, writing `article_data.py` with an `ARTICLE` dict is the safest way to avoid JSON quote errors:
 
@@ -51,16 +60,16 @@ If the environment garbles Chinese source files or the agent is working in Claud
 python scripts/update_article_gate.py article.json --material-folder path/to/material-folder --date 2026-05-28 --editor "推文编辑" --template classic --palette classic
 ```
 
-9. Render HTML:
+10. Render HTML:
 
 ```bash
 python scripts/render_wechat_article.py path/to/article.json --out dist
 ```
 
-10. Run `scripts/check_article_json.py article.json --html dist/article.wechat.html`. Treat any issue as blocking unless the user explicitly accepts the specific risk. Do not say a failed check "does not affect publishing" on your own.
-11. Review `dist/article.preview.html` for reading order, missing fields, overlong cards, and mobile layout. Fix `article.json` and rerun the renderer.
-12. Tell the user to import by opening `article.preview.html` in a browser, selecting the rendered page, and copying the rendered rich text into WeChat. Do not tell them to paste the raw `article.wechat.html` source into the WeChat editor.
-13. Deliver `article.wechat.html` as the primary HTML artifact. Include the suggested WeChat title, digest, and cover suggestion in the final response. Only create a WeChat platform draft when credentials and API access are explicitly available.
+11. Run `scripts/check_article_json.py article.json --html dist/article.wechat.html`. Treat any issue as blocking unless the user explicitly accepts the specific risk. Do not say a failed check "does not affect publishing" on your own.
+12. Review `dist/article.preview.html` for reading order, missing fields, overlong cards, and mobile layout. Fix `article.json` and rerun the renderer.
+13. Tell the user to import by opening `article.preview.html` in a browser, selecting the rendered page, and copying the rendered rich text into WeChat. Do not tell them to paste the raw `article.wechat.html` source into the WeChat editor.
+14. Deliver `article.wechat.html` as the primary HTML artifact. Include the suggested WeChat title, digest, and cover suggestion in the final response. Only create a WeChat platform draft when credentials and API access are explicitly available.
 
 ## Dependency Setup
 

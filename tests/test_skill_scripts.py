@@ -189,6 +189,67 @@ class SkillScriptTests(unittest.TestCase):
             article = json.loads(out.read_text(encoding="utf-8"))
             self.assertEqual(article["meta"]["title"], '链"岛"成"陆"')
 
+    def test_write_article_json_stops_on_replacement_character_garbling(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            article_py = tmp_path / "article_data.py"
+            article_py.write_text("ARTICLE = {'meta': {'title': '2025����'}, 'sections': {}}\n", encoding="utf-8")
+            out = tmp_path / "article.json"
+
+            result = run_script("write_article_json.py", str(article_py), "--out", str(out))
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("replacement characters", result.stderr)
+            self.assertIn("update_article_gate.py", result.stderr)
+
+    def test_update_article_gate_patches_existing_article_json(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            article = {
+                "theme": "zhengeryanzi",
+                "template": "classic",
+                "palette": "classic",
+                "meta": {
+                    "title": "第五次读书分享会纪要",
+                    "date": "2025-06-06",
+                    "host": "谭科峰",
+                    "summary": "导读" * 80,
+                },
+                "sections": {},
+            }
+            article_path = tmp_path / "article.json"
+            article_path.write_text(json.dumps(article, ensure_ascii=False), encoding="utf-8")
+
+            result = run_script(
+                "update_article_gate.py",
+                str(article_path),
+                "--out",
+                str(article_path),
+                "--material-folder",
+                "D:/推文素材",
+                "--date",
+                "2025-06-06",
+                "--date-status",
+                "inferred_from_ppt",
+                "--editor",
+                "黄俊曦",
+                "--editor-status",
+                "user_provided",
+                "--template",
+                "campus",
+                "--palette",
+                "sunrise",
+                "--style-status",
+                "user_selected",
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            updated = json.loads(article_path.read_text(encoding="utf-8"))
+            self.assertEqual(updated["meta"]["editor"], "黄俊曦")
+            self.assertEqual(updated["template"], "campus")
+            self.assertEqual(updated["_meta"]["intake_gate"]["editor"]["status"], "user_provided")
+            self.assertEqual(updated["_meta"]["intake_gate"]["material_folder"]["value"], "D:/推文素材")
+
     def test_check_article_json_flags_source_leakage_missing_literature_and_scaffold(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)

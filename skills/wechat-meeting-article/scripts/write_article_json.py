@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import importlib.util
 import json
 import sys
 from pathlib import Path
@@ -16,15 +15,37 @@ def configure_stdio() -> None:
         sys.stdout.reconfigure(encoding="utf-8")
 
 
+def read_source(path: Path) -> str:
+    data = path.read_bytes()
+    for encoding in ("utf-8-sig", "utf-8", "gb18030", "gbk"):
+        try:
+            return data.decode(encoding)
+        except UnicodeDecodeError:
+            continue
+    return data.decode("utf-8", errors="replace")
+
+
 def load_article(path: Path) -> dict[str, Any]:
-    spec = importlib.util.spec_from_file_location("article_data", path)
-    if spec is None or spec.loader is None:
-        raise RuntimeError(f"Cannot import {path}")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    article = getattr(module, "ARTICLE", None)
+    namespace: dict[str, Any] = {}
+    source = read_source(path)
+    if "\ufffd" in source:
+        raise RuntimeError(
+            f"{path} contains replacement characters, which usually means Chinese text was garbled while writing the file.\n"
+            "Do not keep retrying with large Bash heredocs or inline Python. Write article.json directly, "
+            "validate it with render_wechat_article.py, then run update_article_gate.py."
+        )
+    try:
+        code = compile(source, str(path), "exec")
+        exec(code, namespace)  # noqa: S102 - trusted local article data file.
+    except Exception as exc:  # noqa: BLE001 - report authoring failures clearly.
+        raise RuntimeError(
+            f"Could not execute {path}: {exc}\n"
+            "If this is Claude Code on Windows and Chinese text is garbled, write article.json directly, "
+            "validate it with render_wechat_article.py, then run update_article_gate.py."
+        ) from exc
+    article = namespace.get("ARTICLE")
     if article is None:
-        article = getattr(module, "article", None)
+        article = namespace.get("article")
     if not isinstance(article, dict):
         raise RuntimeError("Input file must define ARTICLE or article as a dict")
     return article

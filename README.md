@@ -143,13 +143,24 @@ python skills\wechat-meeting-article\scripts\draft_article_from_materials.py ext
 python skills\wechat-meeting-article\scripts\create_article_json.py --out article.json
 ```
 
-推荐让 Agent 编写 `article_data.py` 中的 Python `ARTICLE` 字典，再安全导出 JSON：
+如果当前 Agent 能稳定写 UTF-8 Python 文件，推荐让 Agent 编写 `article_data.py` 中的 Python `ARTICLE` 字典，再安全导出 JSON：
 
 ```powershell
 python skills\wechat-meeting-article\scripts\write_article_json.py article_data.py --out article.json
 ```
 
 这样可以避免中文正文或论文题名中的英文引号破坏 JSON。空模板或 scaffold 都只是辅助工具。最终 `article.json` 应当体现 AI 对材料的完整阅读、归纳和写作。
+
+如果在 Claude Code / Windows Bash 环境中出现中文源码乱码，不要反复尝试大型 heredoc 或超长内联 Python。可以直接写 `article.json`，立即运行渲染器检查 JSON 语法，然后用脚本补齐 intake gate：
+
+```powershell
+python skills\wechat-meeting-article\scripts\update_article_gate.py article.json `
+  --material-folder D:\推文素材 `
+  --date 2025-06-06 `
+  --editor 黄俊曦 `
+  --template campus `
+  --palette sunrise
+```
 
 ### 5. 渲染微信公众号 HTML
 

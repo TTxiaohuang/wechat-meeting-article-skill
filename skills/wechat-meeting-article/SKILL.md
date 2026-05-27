@@ -37,10 +37,18 @@ Read `article_notes/paper_notes.json`, `article_notes/transcript_notes.json`, an
 5. Scan extracted materials and notes for optional inserts such as honor news, announcements, project milestones, paper acceptances, activity notices, or supplied photos. Auto-include clearly publication-ready inserts; ask one confirmation question when they are ambiguous, sensitive, or incomplete.
 6. Build source-grounded notes before writing. Do not invent attendees, papers, opinions, conclusions, awards, or citations.
 7. Apply `references/editorial-style.md` before drafting. Keep sections flexible: omit unsupported sections instead of filling them with generic text.
-8. Create `article.json` with AI synthesis from the extracted materials and `references/input-contract.md`. Do not deliver deterministic scaffold output directly. Use `scripts/draft_article_from_materials.py extracted_materials --out article.scaffold.json` only as an optional inventory/scaffold aid. Do not handwrite large raw JSON. Prefer writing `article_data.py` with an `ARTICLE` dict and generating JSON with:
+8. Create `article.json` with AI synthesis from the extracted materials and `references/input-contract.md`. Do not deliver deterministic scaffold output directly. Use `scripts/draft_article_from_materials.py extracted_materials --out article.scaffold.json` only as an optional inventory/scaffold aid.
+
+If the agent can reliably create UTF-8 Python files, writing `article_data.py` with an `ARTICLE` dict is the safest way to avoid JSON quote errors:
 
 ```bash
 python scripts/write_article_json.py article_data.py --out article.json
+```
+
+If the environment garbles Chinese source files or the agent is working in Claude Code on Windows, do not fight the shell with giant heredocs or inline Python. It is acceptable to write `article.json` directly with the file-writing tool, then immediately run the renderer to catch JSON syntax errors. Use `scripts/update_article_gate.py` to patch required intake metadata into an existing valid `article.json`:
+
+```bash
+python scripts/update_article_gate.py article.json --material-folder path/to/material-folder --date 2026-05-28 --editor "推文编辑" --template classic --palette classic
 ```
 
 9. Render HTML:
@@ -143,7 +151,8 @@ Keep components conservative and WeChat-friendly. Static SVG marks, thin divider
 - Use `scripts/prepare_article_notes.py` after extraction to create `paper_notes.json`, `transcript_notes.json`, and `intake_decision.template.json`.
 - Use `scripts/draft_article_from_materials.py` only to create `article.scaffold.json` as an inventory/scaffold aid. Never treat scaffold output as the final article.
 - Use `scripts/create_article_json.py` to create a valid starter JSON file.
-- Use `scripts/write_article_json.py` to generate `article.json` from a Python `ARTICLE` dict instead of hand-writing large raw JSON.
+- Use `scripts/write_article_json.py` to generate `article.json` from a Python `ARTICLE` dict when UTF-8 source files are reliable.
+- Use `scripts/update_article_gate.py` to add or fix `_meta.intake_gate`, editor, template, and palette in an existing valid `article.json`.
 - Use `scripts/render_wechat_article.py` for deterministic HTML output.
 - Use `scripts/check_article_json.py` before delivery to catch source filename leaks, missing literature structure, suspiciously short English speeches, duplicate English speeches, empty publication metadata, and incomplete optional inserts.
 - Use `assets/article-template.html` as the HTML template if the renderer needs visual changes.

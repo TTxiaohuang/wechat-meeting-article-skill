@@ -65,30 +65,24 @@ def brand_icon(size: int = 28) -> str:
     )
 
 
-def render_brand_masthead() -> str:
-    return (
-        '<section data-brand="zhengeryanzi" style="margin:0 0 18px;padding:14px 14px 12px;'
-        'border:1px solid #dceee8;border-radius:10px;background:#fbfdfb;">'
-        '<section style="display:flex;align-items:center;">'
-        f'<section style="width:34px;margin-right:10px;">{brand_icon(32)}</section>'
-        '<section style="flex:1;">'
-        f'<p style="margin:0;color:{TEXT};font-size:20px;font-weight:800;line-height:1.35;">郑而研资</p>'
-        f'<p style="margin:2px 0 0;color:{MUTED};font-size:12px;line-height:1.5;">资产评估学习与组会记录</p>'
-        '</section></section>'
-        '<p style="margin:10px 0 0;border-top:1px dashed #cfe5dc;"></p>'
-        f'<p style="margin:9px 0 0;color:{BRAND_GREEN};font-size:13px;line-height:1.6;">'
-        '以阅读记录讨论，以讨论沉淀研究。</p>'
-        '</section>'
+def render_brand_signature(meta: dict[str, Any]) -> str:
+    credits = []
+    if meta.get("host"):
+        credits.append(f"主持：{meta.get('host')}")
+    editor = meta.get("editor") or meta.get("article_editor")
+    if editor:
+        credits.append(f"推文编辑：{editor}")
+    credits_html = (
+        f'<p style="margin:3px 0 0;color:{MUTED};font-size:12px;line-height:1.5;">{esc(" ｜ ".join(credits))}</p>'
+        if credits
+        else ""
     )
-
-
-def render_brand_signature() -> str:
     return (
         '<section data-brand="zhengeryanzi" style="margin:26px 0 4px;padding:14px 12px;'
         'border-top:1px solid #e6efe9;text-align:center;">'
         f'<section style="width:30px;margin:0 auto 6px;">{brand_icon(28)}</section>'
         f'<p style="margin:0;color:{TEXT};font-size:14px;font-weight:700;line-height:1.6;">本期记录由郑而研资整理</p>'
-        f'<p style="margin:3px 0 0;color:{MUTED};font-size:12px;line-height:1.5;">愿每次分享都成为下一步研究的线索</p>'
+        f'{credits_html}'
         '</section>'
     )
 
@@ -301,8 +295,6 @@ def render_article(article: dict[str, Any]) -> str:
     sections = article.get("sections") or {}
     branded = brand_enabled(article)
     parts = []
-    if branded:
-        parts.append(render_brand_masthead())
     parts.extend([
         f'<h1 style="margin:0 0 10px;color:{TEXT};font-size:23px;line-height:1.35;font-weight:800;">'
         f'{esc(meta.get("title") or "组会纪要")}</h1>',
@@ -334,7 +326,7 @@ def render_article(article: dict[str, Any]) -> str:
             parts.append(renderer(sections[key], visible_index, branded))
             visible_index += 1
     if branded:
-        parts.append(render_brand_signature())
+        parts.append(render_brand_signature(meta))
     return "".join(parts)
 
 

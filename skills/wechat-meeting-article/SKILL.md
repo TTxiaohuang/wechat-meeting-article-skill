@@ -12,20 +12,21 @@ Use this skill to produce a publication-ready WeChat Official Account draft from
 ## Workflow
 
 1. Inventory the input folder and identify available materials: transcript, English speeches, paper PDFs or abstracts, PPT files, policy notes, comments, images, and meeting metadata.
-2. Extract source text before writing. For `.docx`, `.pptx`, and `.pdf`, do not rely on raw file reads; use `scripts/extract_materials.py` or equivalent document parsers. Preserve speaker names, paper titles, DOI/URL fields, slide titles, and timestamps when available.
-3. Build source-grounded notes before writing. Do not invent attendees, papers, opinions, conclusions, or citations.
-4. Apply `references/editorial-style.md` before drafting. Keep sections flexible: omit unsupported sections instead of filling them with generic text.
-5. Create `article.json` with AI synthesis from the extracted materials and `references/input-contract.md`. Do not deliver deterministic scaffold output directly. Use `scripts/draft_article_from_materials.py extracted_materials --out article.scaffold.json` only as an optional inventory/scaffold aid, then write a separate expanded `article.json` from the sources.
-6. Render HTML:
+2. Ask for missing publication metadata before drafting when not obvious: meeting date, host, article editor, whether the user has images to include, and whether they prefer a plain or lightly decorated style. Do not keep asking once these are clear or unavailable.
+3. Extract source text before writing. For `.docx`, `.pptx`, and `.pdf`, do not rely on raw file reads; use `scripts/extract_materials.py` or equivalent document parsers. Preserve speaker names, paper titles, DOI/URL fields, slide titles, and timestamps when available.
+4. Build source-grounded notes before writing. Do not invent attendees, papers, opinions, conclusions, or citations.
+5. Apply `references/editorial-style.md` before drafting. Keep sections flexible: omit unsupported sections instead of filling them with generic text.
+6. Create `article.json` with AI synthesis from the extracted materials and `references/input-contract.md`. Do not deliver deterministic scaffold output directly. Use `scripts/draft_article_from_materials.py extracted_materials --out article.scaffold.json` only as an optional inventory/scaffold aid, then write a separate expanded `article.json` from the sources.
+7. Render HTML:
 
 ```bash
 python scripts/render_wechat_article.py path/to/article.json --out dist
 ```
 
-7. Run `scripts/check_article_json.py article.json --html dist/article.wechat.html` and fix any warnings that affect publication quality.
-8. Review `dist/article.preview.html` for reading order, missing fields, overlong cards, and mobile layout. Fix `article.json` and rerun the renderer.
-9. Tell the user to import by opening `article.preview.html` in a browser, selecting the rendered page, and copying the rendered rich text into WeChat. Do not tell them to paste the raw `article.wechat.html` source into the WeChat editor.
-10. Deliver `article.wechat.html` as the primary HTML artifact. Only create a WeChat platform draft when credentials and API access are explicitly available.
+8. Run `scripts/check_article_json.py article.json --html dist/article.wechat.html` and fix any warnings that affect publication quality.
+9. Review `dist/article.preview.html` for reading order, missing fields, overlong cards, and mobile layout. Fix `article.json` and rerun the renderer.
+10. Tell the user to import by opening `article.preview.html` in a browser, selecting the rendered page, and copying the rendered rich text into WeChat. Do not tell them to paste the raw `article.wechat.html` source into the WeChat editor.
+11. Deliver `article.wechat.html` as the primary HTML artifact. Only create a WeChat platform draft when credentials and API access are explicitly available.
 
 ## Dependency Setup
 
@@ -72,6 +73,7 @@ Prefer "create draft, then human review" over direct publishing. Do not directly
 - Keep `source` fields for traceability only. Do not display filenames, local paths, or transcript names in the WeChat article body.
 - Use provided meeting photos, PPT screenshots, paper figures, or generated cover assets when available and relevant. Do not invent data-bearing academic figures.
 - If no usable images are provided, include image placement suggestions in the final response or `source_trace.md` instead of fabricating figures.
+- Keep the default `zhengeryanzi` theme restrained: no top brand card, static section marks, subtle dividers, and a closing signature with host/editor credits.
 
 ## Resource Guide
 

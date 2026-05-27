@@ -181,6 +181,7 @@ def build_article(input_dir: Path) -> dict[str, Any]:
             "date": "",
             "group": "",
             "host": "",
+            "editor": "",
             "cover_image": "",
             "cover_caption": "",
             "summary": "本次组会围绕英语交流、文献分享和自由讨论展开。",

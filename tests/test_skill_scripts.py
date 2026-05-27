@@ -182,7 +182,7 @@ class SkillScriptTests(unittest.TestCase):
             tmp_path = Path(tmp)
             article = {
                 "theme": "zhengeryanzi",
-                "meta": {"title": "测试组会纪要", "summary": "导读"},
+                "meta": {"title": "测试组会纪要", "summary": "导读", "host": "谭灵风", "editor": "张三"},
                 "sections": {
                     "free_discussion": {
                         "title": "自由讨论与会议总结",
@@ -203,6 +203,10 @@ class SkillScriptTests(unittest.TestCase):
             self.assertIn("data-brand=\"zhengeryanzi\"", html)
             self.assertIn("<svg", html)
             self.assertIn("本期记录由郑而研资整理", html)
+            self.assertIn("主持：谭灵风", html)
+            self.assertIn("推文编辑：张三", html)
+            self.assertNotIn("资产评估学习与组会记录", html)
+            self.assertNotIn("以阅读记录讨论，以讨论沉淀研究", html)
 
 
 if __name__ == "__main__":

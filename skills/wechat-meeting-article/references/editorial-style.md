@@ -54,9 +54,11 @@ Do not invent data charts, regression tables, or paper figures. If no suitable i
 
 ## Brand Theme
 
-Use `"theme": "zhengeryanzi"` for the default account style. The renderer adds a static masthead, small inline SVG section marks, and a closing signature. Keep these static by default because WeChat editor compatibility is more predictable than animated SVG interactions.
+Use `"theme": "zhengeryanzi"` for the default account style. The renderer adds small inline SVG section marks and a closing signature. Do not add a large top brand card by default. Keep decorations static because WeChat editor compatibility is more predictable than animated SVG interactions.
 
 Only use SVG animation or interaction when the user explicitly asks for an experimental version and agrees to test it in WeChat preview.
+
+For the closing signature, prefer `meta.host` and `meta.editor`, rendered as "主持：..." and "推文编辑：...". Do not use a generic slogan when credit metadata is available.
 
 Useful image placement suggestions:
 
@@ -70,5 +72,6 @@ Useful image placement suggestions:
 - Use a short lead summary under the title.
 - Prefer compact section headings and clear paragraph rhythm.
 - Use quote blocks for meeting comments. Avoid putting every literature subfield into a colored card; ordinary text with small headings is usually easier to read.
+- Use decoration sparingly: thin dividers, small SVG marks, subtle quote backgrounds, and occasional image separators. Avoid Xiumi-style dense frames, sticker-like ornaments, flashing effects, and decorative clutter.
 - Avoid visible technical labels such as `source`, local filenames, JSON keys, extraction notes, or script names.
 - Keep wording warm and academic: accessible enough for public reading, but not marketing-like.

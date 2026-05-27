@@ -22,6 +22,7 @@ def starter_article() -> dict:
             "date": "",
             "group": "",
             "host": "",
+            "editor": "",
             "cover_image": "",
             "cover_caption": "",
             "summary": "本次组会围绕英语交流、文献分享、时政交流和自由讨论展开。",

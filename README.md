@@ -9,6 +9,8 @@ The skill helps an agent process transcripts, English speeches, literature shari
 - `article.preview.html`: local preview HTML
 - `source_trace.md`: source-to-claim notes
 
+The current style defaults to preserving supplied English speech drafts as full text, hiding source filenames from the visible article, and expanding literature sharing into structured reading-note sections.
+
 ## Repository Layout
 
 ```text

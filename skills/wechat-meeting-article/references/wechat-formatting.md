@@ -32,15 +32,33 @@ Alternative workflow:
 - Avoid external CSS, JavaScript, iframes, complex positioning, and remote font dependencies.
 - Keep paragraphs short and use line-height around `1.75`.
 - Do not rely on desktop width. Test around 360-430 px wide.
+- Do not show extraction metadata, source filenames, or local file paths in the visible body.
+- Use a lead summary card, numbered section headings, paper information blocks, and quote blocks to avoid a raw report-like layout.
 
 ## English Speech Cards
 
 Default to horizontal scrolling HTML cards:
 
 - Container: `overflow-x:auto; white-space:nowrap;`
-- Card: `display:inline-block; vertical-align:top; width:82%; max-width:320px; white-space:normal;`
+- Card: `display:inline-block; vertical-align:top; width:86%; max-width:340px; white-space:normal;`
 - One speaker per card.
-- Keep the full text available, but summarize overly long speeches if the article becomes hard to read.
+- If source speech drafts are provided, keep the full original English text in the card body.
+- Add a short "左右滑动查看完整英文发言" hint before the cards.
+
+## Literature Blocks
+
+Prefer a paper card sequence:
+
+- paper title and metadata
+- optional supplied image or PPT/paper figure
+- research background
+- research question
+- methods and data
+- core findings list
+- discussion value
+- meeting comments as quote blocks
+
+This makes the literature section feel like a public-facing academic reading note instead of a short meeting log.
 
 ## SVG Guidance
 

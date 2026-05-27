@@ -14,16 +14,17 @@ Use this skill to produce a publication-ready WeChat Official Account draft from
 1. Inventory the input folder and identify available materials: transcript, English speeches, paper PDFs or abstracts, PPT files, policy notes, comments, images, and meeting metadata.
 2. Extract source text before writing. For `.docx`, `.pptx`, and `.pdf`, do not rely on raw file reads; use `scripts/extract_materials.py` or equivalent document parsers. Preserve speaker names, paper titles, DOI/URL fields, slide titles, and timestamps when available.
 3. Build source-grounded notes before writing. Do not invent attendees, papers, opinions, conclusions, or citations.
-4. Create a valid `article.json` using `references/input-contract.md`. Prefer generating it with `scripts/create_article_json.py` and editing the JSON values instead of hand-writing JSON from scratch.
-5. Render HTML:
+4. Apply `references/editorial-style.md` before drafting. Keep sections flexible: omit unsupported sections instead of filling them with generic text.
+5. Create a valid `article.json` using `references/input-contract.md`. Prefer generating it with `scripts/create_article_json.py` and editing the JSON values instead of hand-writing JSON from scratch.
+6. Render HTML:
 
 ```bash
 python scripts/render_wechat_article.py path/to/article.json --out dist
 ```
 
-6. Review `dist/article.preview.html` for reading order, missing fields, overlong cards, and mobile layout. Fix `article.json` and rerun the renderer.
-7. Tell the user to import by opening `article.preview.html` in a browser, selecting the rendered page, and copying the rendered rich text into WeChat. Do not tell them to paste the raw `article.wechat.html` source into the WeChat editor.
-8. Deliver `article.wechat.html` as the primary HTML artifact. Only create a WeChat platform draft when credentials and API access are explicitly available.
+7. Review `dist/article.preview.html` for reading order, missing fields, overlong cards, and mobile layout. Fix `article.json` and rerun the renderer.
+8. Tell the user to import by opening `article.preview.html` in a browser, selecting the rendered page, and copying the rendered rich text into WeChat. Do not tell them to paste the raw `article.wechat.html` source into the WeChat editor.
+9. Deliver `article.wechat.html` as the primary HTML artifact. Only create a WeChat platform draft when credentials and API access are explicitly available.
 
 ## Dependency Setup
 
@@ -60,14 +61,18 @@ Prefer "create draft, then human review" over direct publishing. Do not directly
 
 - Keep the article suitable for mobile reading: short paragraphs, clear section headings, readable line spacing, and restrained emphasis.
 - Preserve the four expected meeting sections when materials support them: English exchange, literature sharing, current affairs or policy discussion, free discussion and meeting summary.
-- English speech cards should show one speaker per card. Keep long speeches concise unless the user asks to publish full transcripts.
-- Literature sections must distinguish paper facts from meeting comments. If paper metadata is incomplete, mark it for confirmation instead of guessing.
+- Omit any section that lacks source material. Do not force a current-affairs/policy section into older meetings that did not include one.
+- English speech cards should show one speaker per card. If the user provides each person's English speech draft, publish the full original text by default; do not summarize or polish it unless explicitly asked.
+- Literature sections must distinguish paper facts from meeting comments. Expand paper introductions into background, research question, methods/data, core findings, and discussion value when the source supports it. If paper metadata is incomplete, mark it for confirmation instead of guessing.
 - Policy/current-affairs sections should summarize viewpoints neutrally and attribute them to roles or speakers when available.
 - Meeting summaries should be concise and avoid unsupported claims about consensus.
+- Keep `source` fields for traceability only. Do not display filenames, local paths, or transcript names in the WeChat article body.
+- Use provided meeting photos, PPT screenshots, paper figures, or generated cover assets when available and relevant. Do not invent data-bearing academic figures.
 
 ## Resource Guide
 
 - Read `references/input-contract.md` when creating or validating `article.json`.
+- Read `references/editorial-style.md` before drafting or revising article content.
 - Read `references/material-extraction.md` when the task includes `.docx`, `.pptx`, `.pdf`, `.txt`, or `.md` materials.
 - Read `references/wechat-formatting.md` when adjusting HTML, SVG, card layout, or editor compatibility.
 - Read `references/wechat-api.md` only when the task involves creating a WeChat draft or uploading images/materials.

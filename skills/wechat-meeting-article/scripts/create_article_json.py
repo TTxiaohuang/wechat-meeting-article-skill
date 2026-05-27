@@ -22,6 +22,7 @@ def starter_article() -> dict:
             "group": "",
             "host": "",
             "cover_image": "",
+            "cover_caption": "",
             "summary": "本次组会围绕英语交流、文献分享、时政交流和自由讨论展开。",
         },
         "sections": {
@@ -29,10 +30,12 @@ def starter_article() -> dict:
                 "title": "英语交流",
                 "topic": "",
                 "intro": "",
+                "images": [],
                 "speeches": [
                     {
                         "speaker": "",
                         "role": "",
+                        "mode": "full_text",
                         "text": "",
                         "source": "",
                     }
@@ -40,6 +43,8 @@ def starter_article() -> dict:
             },
             "literature_sharing": {
                 "title": "文献分享",
+                "intro": "",
+                "images": [],
                 "papers": [
                     {
                         "title": "",
@@ -47,6 +52,12 @@ def starter_article() -> dict:
                         "venue": "",
                         "doi": "",
                         "presenter": "",
+                        "images": [],
+                        "background": "",
+                        "research_question": "",
+                        "methods_data": "",
+                        "findings": [],
+                        "discussion_value": "",
                         "summary": "",
                         "comments": [
                             {
@@ -62,6 +73,7 @@ def starter_article() -> dict:
                 "title": "时政交流",
                 "topic": "",
                 "summary": "",
+                "images": [],
                 "viewpoints": [
                     {
                         "speaker": "",
@@ -72,6 +84,7 @@ def starter_article() -> dict:
             },
             "free_discussion": {
                 "title": "自由讨论与会议总结",
+                "images": [],
                 "items": [
                     {
                         "speaker": "",

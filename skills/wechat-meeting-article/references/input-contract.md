@@ -20,6 +20,7 @@ Then edit values while preserving JSON syntax.
     "group": "课题组名称",
     "host": "主持人",
     "cover_image": "",
+    "cover_caption": "",
     "summary": "本次组会围绕英语交流、文献分享、时政交流和自由讨论展开。"
   },
   "sections": {
@@ -27,10 +28,12 @@ Then edit values while preserving JSON syntax.
       "title": "英语交流",
       "topic": "本周话题",
       "intro": "简要说明交流主题。",
+      "images": [],
       "speeches": [
         {
           "speaker": "张三",
           "role": "学生",
+          "mode": "full_text",
           "text": "English speech text here.",
           "source": "english_speeches/zhangsan.docx"
         }
@@ -38,6 +41,8 @@ Then edit values while preserving JSON syntax.
     },
     "literature_sharing": {
       "title": "文献分享",
+      "intro": "",
+      "images": [],
       "papers": [
         {
           "title": "Paper title",
@@ -45,6 +50,15 @@ Then edit values while preserving JSON syntax.
           "venue": "Journal, Year",
           "doi": "",
           "presenter": "李四",
+          "images": [],
+          "background": "文献研究背景。",
+          "research_question": "文献试图回答的核心问题。",
+          "methods_data": "数据、方法、模型或识别策略。",
+          "findings": [
+            "核心发现一。",
+            "核心发现二。"
+          ],
+          "discussion_value": "这篇文献对本次组会或课题组研究的启发。",
           "summary": "文献核心问题、方法和主要发现。",
           "comments": [
             {
@@ -60,6 +74,7 @@ Then edit values while preserving JSON syntax.
       "title": "时政交流",
       "topic": "政策或时事主题",
       "summary": "背景和讨论焦点。",
+      "images": [],
       "viewpoints": [
         {
           "speaker": "参会者",
@@ -70,6 +85,7 @@ Then edit values while preserving JSON syntax.
     },
     "free_discussion": {
       "title": "自由讨论与会议总结",
+      "images": [],
       "items": [
         {
           "speaker": "主持人",
@@ -93,5 +109,10 @@ Then edit values while preserving JSON syntax.
 - Put incomplete or uncertain fields as empty strings and add a note in `source_trace.md`.
 - If source materials conflict, preserve the conflict in notes and ask for confirmation instead of silently merging.
 - Keep source paths relative to the input material folder when possible.
+- Treat `source` as private trace metadata. It is for `source_trace.md` and verification only; the renderer does not show it in the WeChat body.
+- For English speeches, `mode: "full_text"` means the card should preserve the original speech draft. Use this as the default when speech drafts are provided.
+- For literature sharing, prefer `background`, `research_question`, `methods_data`, `findings`, and `discussion_value` over a short generic `summary`.
+- `images` can contain strings or objects like `{"url": "path-or-url", "caption": "图注", "alt": "替代文本"}`. Use only supplied or explicitly generated images.
+- Omit sections with no source material instead of filling placeholder text.
 - JSON requires standard double quotes around keys and string values. Do not paste unescaped quotes inside strings. For example, write `围绕'最近最想做的事情'展开分享` or escape quotes as `围绕\"最近最想做的事情\"展开分享`.
 - Do not handwrite large JSON blocks when a script can generate them. Use `json.dumps(..., ensure_ascii=False, indent=2)` in Python when building `article.json` programmatically.

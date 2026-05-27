@@ -16,31 +16,43 @@ Before drafting, collect only the metadata that affects publication quality:
 - Material folder path.
 - Meeting date, or permission to infer it from materials.
 - Host when not obvious from materials.
-- Article editor when the closing credit should include one.
-- Preferred visual style if the user cares; otherwise use `classic`.
+- Article editor, or explicit confirmation that editor credit should be omitted.
+- Preferred visual style, or explicit confirmation that the default `classic` style is acceptable.
 - Whether provided images, PPT screenshots, certificates, or cover assets should be used.
 
-Do not ask a long questionnaire. Infer obvious details from filenames, PPT titles, transcripts, or user-provided choices. Ask one confirmation question only when a detail is missing, sensitive, contradictory, or likely to change the article emphasis.
+Do not ask a long questionnaire, but do not skip editor and visual-style decisions. Infer obvious details from filenames, PPT titles, transcripts, or user-provided choices. Ask one confirmation question only when a detail is missing, sensitive, contradictory, or likely to change the article emphasis. Record decisions in `_meta.intake_gate`; if editor is intentionally omitted, set `_meta.intake_gate.editor.status` to `omitted_confirmed`.
 
 ## Workflow
 
 1. Inventory the input folder and identify available materials: transcript, English speeches, paper PDFs or abstracts, PPT files, policy notes, comments, images, certificates, honor-news documents, and meeting metadata.
 2. Apply the Intake Gate. Do not keep asking once details are clear, inferable, or the user has accepted defaults.
 3. Extract source text before writing. For `.docx`, `.pptx`, and `.pdf`, do not rely on raw file reads; use `scripts/extract_materials.py` or equivalent document parsers. PDFs are extracted in full by default; read selectively from the extracted text instead of stuffing entire long papers into context. Preserve speaker names, paper titles, DOI/URL fields, slide titles, and timestamps when available.
-4. Scan extracted materials for optional inserts such as honor news, announcements, project milestones, paper acceptances, activity notices, or supplied photos. Auto-include clearly publication-ready inserts; ask one confirmation question when they are ambiguous, sensitive, or incomplete.
-5. Build source-grounded notes before writing. Do not invent attendees, papers, opinions, conclusions, awards, or citations.
-6. Apply `references/editorial-style.md` before drafting. Keep sections flexible: omit unsupported sections instead of filling them with generic text.
-7. Create `article.json` with AI synthesis from the extracted materials and `references/input-contract.md`. Do not deliver deterministic scaffold output directly. Use `scripts/draft_article_from_materials.py extracted_materials --out article.scaffold.json` only as an optional inventory/scaffold aid, then write a separate expanded `article.json` from the sources.
-8. Render HTML:
+4. Create intermediate notes before drafting:
+
+```bash
+python scripts/prepare_article_notes.py extracted_materials --out article_notes
+```
+
+Read `article_notes/paper_notes.json`, `article_notes/transcript_notes.json`, and `article_notes/intake_decision.template.json` first. For long extracted files, use the notes as an index and reopen only relevant excerpts instead of reading every extracted character into context.
+5. Scan extracted materials and notes for optional inserts such as honor news, announcements, project milestones, paper acceptances, activity notices, or supplied photos. Auto-include clearly publication-ready inserts; ask one confirmation question when they are ambiguous, sensitive, or incomplete.
+6. Build source-grounded notes before writing. Do not invent attendees, papers, opinions, conclusions, awards, or citations.
+7. Apply `references/editorial-style.md` before drafting. Keep sections flexible: omit unsupported sections instead of filling them with generic text.
+8. Create `article.json` with AI synthesis from the extracted materials and `references/input-contract.md`. Do not deliver deterministic scaffold output directly. Use `scripts/draft_article_from_materials.py extracted_materials --out article.scaffold.json` only as an optional inventory/scaffold aid. Do not handwrite large raw JSON. Prefer writing `article_data.py` with an `ARTICLE` dict and generating JSON with:
+
+```bash
+python scripts/write_article_json.py article_data.py --out article.json
+```
+
+9. Render HTML:
 
 ```bash
 python scripts/render_wechat_article.py path/to/article.json --out dist
 ```
 
-9. Run `scripts/check_article_json.py article.json --html dist/article.wechat.html` and fix any warnings that affect publication quality.
-10. Review `dist/article.preview.html` for reading order, missing fields, overlong cards, and mobile layout. Fix `article.json` and rerun the renderer.
-11. Tell the user to import by opening `article.preview.html` in a browser, selecting the rendered page, and copying the rendered rich text into WeChat. Do not tell them to paste the raw `article.wechat.html` source into the WeChat editor.
-12. Deliver `article.wechat.html` as the primary HTML artifact. Include the suggested WeChat title, digest, and cover suggestion in the final response. Only create a WeChat platform draft when credentials and API access are explicitly available.
+10. Run `scripts/check_article_json.py article.json --html dist/article.wechat.html`. Treat any issue as blocking unless the user explicitly accepts the specific risk. Do not say a failed check "does not affect publishing" on your own.
+11. Review `dist/article.preview.html` for reading order, missing fields, overlong cards, and mobile layout. Fix `article.json` and rerun the renderer.
+12. Tell the user to import by opening `article.preview.html` in a browser, selecting the rendered page, and copying the rendered rich text into WeChat. Do not tell them to paste the raw `article.wechat.html` source into the WeChat editor.
+13. Deliver `article.wechat.html` as the primary HTML artifact. Include the suggested WeChat title, digest, and cover suggestion in the final response. Only create a WeChat platform draft when credentials and API access are explicitly available.
 
 ## Dependency Setup
 
@@ -64,6 +76,16 @@ python scripts/extract_materials.py path/to/material-folder --out extracted_mate
 
 Script paths in examples are relative to the skill directory. When an agent is working from another folder, use the absolute path to the script.
 
+## Context Budget
+
+Do not rely on the model remembering whole PDFs or long transcripts.
+
+- Always extract full PDFs to disk, then read selectively.
+- If a single extracted file is longer than about 12,000 Chinese characters or 8,000 English words, use `prepare_article_notes.py` and search/reopen targeted sections instead of reading the whole file in one context pass.
+- Use `paper_notes.json` as a table of contents, not as a replacement for source evidence.
+- Use `transcript_notes.json` to locate stable discussion themes and noisy ASR areas.
+- Write intermediate conclusions into `article_data.py` or notes files so shorter-context models can continue without re-reading everything.
+
 ## Output Policy
 
 Default to these deliverables:
@@ -71,6 +93,7 @@ Default to these deliverables:
 - `article.json`: structured, editable source of truth.
 - `article.wechat.html`: WeChat-compatible HTML for copy/import into WeChat, doocs/md, 135, Xiumi, or a custom uploader.
 - `article.preview.html`: browser preview wrapper for checking layout before import.
+- `article_notes/`: budgeted paper/transcript notes and an intake decision template when materials are long or noisy.
 
 Do not create `source_trace.md` by default. Create it only when the user asks for traceability, audit notes, reviewer checking, citation mapping, or a rigorous verification package. Keep `source` fields in `article.json` for private agent verification.
 
@@ -117,8 +140,10 @@ Keep components conservative and WeChat-friendly. Static SVG marks, thin divider
 - Read `references/wechat-formatting.md` when adjusting HTML, SVG, card layout, or editor compatibility.
 - Read `references/wechat-api.md` only when the task involves creating a WeChat draft or uploading images/materials.
 - Use `scripts/extract_materials.py` to create Markdown text extracts and `materials_manifest.json`.
+- Use `scripts/prepare_article_notes.py` after extraction to create `paper_notes.json`, `transcript_notes.json`, and `intake_decision.template.json`.
 - Use `scripts/draft_article_from_materials.py` only to create `article.scaffold.json` as an inventory/scaffold aid. Never treat scaffold output as the final article.
 - Use `scripts/create_article_json.py` to create a valid starter JSON file.
+- Use `scripts/write_article_json.py` to generate `article.json` from a Python `ARTICLE` dict instead of hand-writing large raw JSON.
 - Use `scripts/render_wechat_article.py` for deterministic HTML output.
 - Use `scripts/check_article_json.py` before delivery to catch source filename leaks, missing literature structure, suspiciously short English speeches, duplicate English speeches, empty publication metadata, and incomplete optional inserts.
 - Use `assets/article-template.html` as the HTML template if the renderer needs visual changes.

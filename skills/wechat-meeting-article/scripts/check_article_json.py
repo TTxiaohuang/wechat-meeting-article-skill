@@ -32,10 +32,14 @@ SUPPORTED_PLACEMENTS = {
     "after_english_exchange",
     "before_literature_sharing",
     "after_literature_sharing",
+    "before_policy_discussion",
+    "after_policy_discussion",
     "before_free_discussion",
     "after_free_discussion",
     "before_closing",
 }
+REQUIRED_INTAKE_FIELDS = ("material_folder", "date", "editor", "visual_style")
+EDITOR_OMISSION_STATUSES = {"omitted_confirmed", "not_needed_confirmed"}
 
 
 def configure_stdio() -> None:
@@ -96,14 +100,37 @@ def normalize_choice(value: Any) -> str:
     return str(value or "").strip().lower().replace("_", "-")
 
 
+def intake_field_status(gate: dict[str, Any], field: str) -> str:
+    value = gate.get(field)
+    if isinstance(value, dict):
+        return str(value.get("status") or "").strip().lower()
+    if isinstance(value, str):
+        return "recorded" if value.strip() else ""
+    return ""
+
+
+def check_intake_gate(article: dict[str, Any]) -> list[str]:
+    issues: list[str] = []
+    gate = article.get("_meta", {}).get("intake_gate")
+    if not isinstance(gate, dict):
+        return ["intake gate missing; record required confirmations or inferences before delivery"]
+    for field in REQUIRED_INTAKE_FIELDS:
+        if not intake_field_status(gate, field):
+            issues.append(f"intake gate missing {field} decision")
+    return issues
+
+
 def check_meta_and_style(article: dict[str, Any]) -> list[str]:
     issues: list[str] = []
     meta = article.get("meta", {})
     for field in ("title", "date", "host"):
         if not str(meta.get(field) or "").strip():
             issues.append(f"meta.{field} is missing")
+    gate = article.get("_meta", {}).get("intake_gate") or {}
+    editor_status = intake_field_status(gate, "editor") if isinstance(gate, dict) else ""
     if not str(meta.get("editor") or meta.get("article_editor") or "").strip():
-        issues.append("article editor is missing; confirm whether to omit the editor credit")
+        if editor_status not in EDITOR_OMISSION_STATUSES:
+            issues.append("editor decision missing; set meta.editor or record omitted_confirmed in _meta.intake_gate.editor")
 
     template = normalize_choice(article.get("template") or meta.get("template") or "classic")
     palette = normalize_choice(article.get("palette") or meta.get("palette") or "classic")
@@ -181,6 +208,7 @@ def main() -> int:
     article = load_json(args.article_json)
     issues = []
     issues.extend(check_scaffold_and_length(article, args.min_chars))
+    issues.extend(check_intake_gate(article))
     issues.extend(check_meta_and_style(article))
     issues.extend(check_literature(article))
     issues.extend(check_english(article))

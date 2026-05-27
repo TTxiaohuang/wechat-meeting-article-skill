@@ -16,6 +16,14 @@ def configure_stdio() -> None:
 
 def starter_article() -> dict:
     return {
+        "_meta": {
+            "intake_gate": {
+                "material_folder": {"value": "", "status": ""},
+                "date": {"value": "", "status": ""},
+                "editor": {"value": "", "status": ""},
+                "visual_style": {"value": "classic", "status": ""},
+            }
+        },
         "theme": "zhengeryanzi",
         "template": "classic",
         "palette": "classic",

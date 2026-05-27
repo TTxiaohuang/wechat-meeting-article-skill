@@ -103,6 +103,92 @@ class SkillScriptTests(unittest.TestCase):
             self.assertTrue(papers[0]["title"].startswith("链"))
             self.assertFalse(papers[0]["title"].lower().endswith(".pdf"))
 
+    def test_prepare_article_notes_creates_budgeted_intermediate_notes(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            materials = tmp_path / "extracted_materials"
+            notes = tmp_path / "notes"
+            materials.mkdir()
+            paper_text = (
+                "# 链\"岛\"成\"陆\"：公共数据开放的技术创新效应研究.pdf\n\n"
+                "Source: `paper.pdf`\n\n"
+                "摘要：本文研究公共数据开放对技术创新的影响。\n\n"
+                "## 研究设计\n\n本文采用多时点DID模型。\n\n"
+                "## 研究结果\n\n公共数据开放显著促进技术创新。\n\n"
+                "## 稳健性检验\n\n经过安慰剂检验和替换变量检验。\n\n"
+                "## 结论\n\n数据开放具有创新效应。\n"
+            )
+            transcript_text = (
+                "# 新录音_1_原文.docx\n\n"
+                "老师：这个地方识别可能不准，但是达摩达兰评估特斯拉的例子很重要。\n\n"
+                "同学：我们还讨论了开题和课程论文安排。\n"
+            )
+            (materials / "paper.md").write_text(paper_text, encoding="utf-8")
+            (materials / "新录音_1_原文.md").write_text(transcript_text, encoding="utf-8")
+            manifest = {
+                "files": [
+                    {
+                        "source": "paper.pdf",
+                        "type": "pdf",
+                        "output": str(materials / "paper.md"),
+                        "chars": len(paper_text),
+                        "pdf_pages_total": 12,
+                        "pdf_pages_extracted": 12,
+                        "pdf_pages_requested": "all",
+                        "pdf_text_pages": 12,
+                    },
+                    {
+                        "source": "新录音_1_原文.docx",
+                        "type": "docx",
+                        "output": str(materials / "新录音_1_原文.md"),
+                        "chars": len(transcript_text),
+                    },
+                ]
+            }
+            (materials / "materials_manifest.json").write_text(
+                json.dumps(manifest, ensure_ascii=False),
+                encoding="utf-8",
+            )
+
+            result = run_script(
+                "prepare_article_notes.py",
+                str(materials),
+                "--out",
+                str(notes),
+                "--max-section-chars",
+                "80",
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            paper_notes = json.loads((notes / "paper_notes.json").read_text(encoding="utf-8"))
+            transcript_notes = json.loads((notes / "transcript_notes.json").read_text(encoding="utf-8"))
+            intake = json.loads((notes / "intake_decision.template.json").read_text(encoding="utf-8"))
+            self.assertEqual(paper_notes["papers"][0]["pdf_pages_extracted"], 12)
+            self.assertIn("摘要", paper_notes["papers"][0]["sections"])
+            self.assertIn("研究设计", paper_notes["papers"][0]["sections"])
+            self.assertLessEqual(len(paper_notes["papers"][0]["sections"]["研究设计"]), 81)
+            self.assertTrue(transcript_notes["transcripts"][0]["noisy_transcript"])
+            self.assertIn("editor", intake["intake_gate"])
+
+    def test_write_article_json_dumps_python_article_dict_safely(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            article_py = tmp_path / "article_data.py"
+            article_py.write_text(
+                "ARTICLE = {\n"
+                "  'meta': {'title': '链\"岛\"成\"陆\"', 'date': '2026-05-28', 'host': '主持人'},\n"
+                "  'sections': {}\n"
+                "}\n",
+                encoding="utf-8",
+            )
+            out = tmp_path / "article.json"
+
+            result = run_script("write_article_json.py", str(article_py), "--out", str(out))
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            article = json.loads(out.read_text(encoding="utf-8"))
+            self.assertEqual(article["meta"]["title"], '链"岛"成"陆"')
+
     def test_check_article_json_flags_source_leakage_missing_literature_and_scaffold(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
@@ -171,6 +257,81 @@ class SkillScriptTests(unittest.TestCase):
 
             self.assertEqual(result.returncode, 1)
             self.assertIn("article appears too short", result.stdout)
+
+    def test_check_article_json_requires_intake_gate_and_editor_decision(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            article = {
+                "meta": {
+                    "title": "测试组会纪要",
+                    "date": "2026-05-28",
+                    "host": "主持人",
+                    "summary": "本次组会围绕文献分享展开。",
+                },
+                "sections": {
+                    "literature_sharing": {
+                        "papers": [
+                            {
+                                "title": "Paper",
+                                "background": "背景" * 80,
+                                "research_question": "问题",
+                                "methods_data": "方法",
+                                "findings": ["发现"],
+                                "discussion_value": "价值",
+                            }
+                        ]
+                    }
+                },
+            }
+            article_path = tmp_path / "article.json"
+            article_path.write_text(json.dumps(article, ensure_ascii=False), encoding="utf-8")
+
+            result = run_script("check_article_json.py", str(article_path), "--min-chars", "100")
+
+            self.assertEqual(result.returncode, 1)
+            self.assertIn("intake gate missing", result.stdout)
+            self.assertIn("editor decision missing", result.stdout)
+
+    def test_check_article_json_allows_confirmed_editor_omission(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            article = {
+                "_meta": {
+                    "intake_gate": {
+                        "material_folder": {"value": "D:/素材", "status": "user_provided"},
+                        "date": {"value": "2026-05-28", "status": "inferred"},
+                        "editor": {"value": "", "status": "omitted_confirmed"},
+                        "visual_style": {"value": "classic", "status": "default_confirmed"},
+                    }
+                },
+                "meta": {
+                    "title": "测试组会纪要",
+                    "date": "2026-05-28",
+                    "host": "主持人",
+                    "editor": "",
+                    "summary": "本次组会围绕文献分享展开。" * 20,
+                },
+                "sections": {
+                    "literature_sharing": {
+                        "papers": [
+                            {
+                                "title": "Paper",
+                                "background": "背景" * 80,
+                                "research_question": "问题",
+                                "methods_data": "方法",
+                                "findings": ["发现"],
+                                "discussion_value": "价值",
+                            }
+                        ]
+                    }
+                },
+            }
+            article_path = tmp_path / "article.json"
+            article_path.write_text(json.dumps(article, ensure_ascii=False), encoding="utf-8")
+
+            result = run_script("check_article_json.py", str(article_path), "--min-chars", "100")
+
+            self.assertEqual(result.returncode, 0, result.stdout)
 
     def test_renderer_uses_less_card_like_literature_blocks(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

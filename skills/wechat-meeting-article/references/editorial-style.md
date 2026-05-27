@@ -9,7 +9,8 @@ Use this reference before drafting or revising the article content.
 3. Keep source filenames and local paths out of the visible article.
 4. Use flexible sections: omit unsupported meeting sections instead of forcing a template.
 5. Keep `source` fields in `article.json` for private verification. Create `source_trace.md` only when the user asks for traceability, audit notes, or citation mapping.
-6. Treat deterministic scaffold files as inventory aids only. The final article must be synthesized by reading the extracted materials.
+6. Treat deterministic scaffold files and `article_notes` as inventory aids only. The final article must be synthesized by reading the extracted materials.
+7. Treat a failed `check_article_json.py` result as a stop signal. Fix the issue or ask the user to accept the exact risk; do not waive it silently.
 
 ## English Exchange
 
@@ -36,6 +37,7 @@ Avoid vague lines such as "this paper has important reference value" unless foll
 
 Before rendering, compare the final article against the extracted materials:
 
+- If `_meta.intake_gate` is missing or incomplete, stop before rendering and record the missing decisions.
 - If the English draft contains many speakers but `article.json` only contains one or two, revisit the extraction and do not publish.
 - If a transcript is long but the final free discussion contains only one generic sentence, revisit the transcript.
 - If paper extracts are thousands of characters but each paper section contains only a few short lines, expand the literature notes.

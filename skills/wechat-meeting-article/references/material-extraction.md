@@ -11,15 +11,23 @@ python scripts/extract_materials.py path/to/material-folder --out extracted_mate
 The script writes:
 
 - one Markdown text file per supported source file
-- `materials_manifest.json` with source paths, output paths, status, and errors
+- `materials_manifest.json` with source paths, output paths, status, extraction metadata, and errors
 
 Output filenames are sanitized for agent and shell compatibility. Quote-like characters, path separators, and other fragile punctuation are replaced with underscores. The original source path is preserved in `materials_manifest.json`.
 
-For long PDFs, the default is the first 5 pages:
+For PDFs, the default is full-document extraction. This keeps the evidence complete for literature sharing. To limit very long files, pass a positive page count:
 
 ```bash
 python scripts/extract_materials.py path/to/material-folder --out extracted_materials --pdf-pages 10
 ```
+
+To be explicit about full PDF extraction:
+
+```bash
+python scripts/extract_materials.py path/to/material-folder --out extracted_materials --pdf-pages all
+```
+
+For each PDF, the manifest records `pdf_pages_total`, `pdf_pages_requested`, `pdf_pages_extracted`, and `pdf_text_pages`. If `pdf_text_pages` is 0, the PDF may be scanned or image-based and should not be treated as fully readable.
 
 ## Dependencies
 
@@ -52,6 +60,18 @@ python -c "from pathlib import Path; print(Path('extracted_materials/file.md').r
 - Do not use raw file reads for `.docx`, `.pptx`, or `.pdf`; these are binary formats.
 - For `.docx`, preserve paragraph order and table rows.
 - For `.pptx`, preserve slide order and slide numbers.
-- For `.pdf`, extract enough pages to identify title, authors, abstract, methods, results, and discussion points. Increase `--pdf-pages` when needed.
+- For `.pdf`, default to full extraction so the article can cover title, authors, abstract, methods, results, robustness checks, discussion, and conclusion. Full extraction does not mean the agent must paste the whole PDF into context; read selectively using headings and searches for terms such as 摘要, 引言, 研究设计, 数据, 方法, 结果, 机制, 稳健性, 讨论, 结论, limitations, and conclusion.
 - Save extraction errors in the manifest instead of silently skipping files.
 - Treat extracted text as raw evidence. The final article still needs source-grounded synthesis and human-readable rewriting.
+
+## Noisy Transcript Handling
+
+Treat audio transcription files as noisy evidence, not authoritative quotations.
+
+- Use transcripts to recover discussion topics, teacher comments, student questions, and action items.
+- Cross-check names, paper titles, dates, methods, institutions, awards, and technical terms against PPT files, PDFs, filenames, and user-provided notes.
+- Silently repair obvious ASR errors only when the correction is strongly supported by other materials or standard academic terminology.
+- Do not quote long transcript passages verbatim unless the wording is clear and useful.
+- If a transcript is messy, summarize the stable meaning and avoid over-precise attribution.
+- Ask one concise confirmation question when an ASR ambiguity changes a public fact, such as who won an award, the exact award name, a meeting date, or a sensitive personal detail.
+- When the model cannot resolve transcript noise, mark the item as uncertain in draft notes or omit it from the public article rather than inventing a polished claim.

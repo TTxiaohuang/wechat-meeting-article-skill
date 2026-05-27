@@ -7,26 +7,40 @@ description: Generate WeChat Official Account article drafts from weekly researc
 
 ## Overview
 
-Use this skill to produce a publication-ready WeChat Official Account draft from weekly group meeting materials. The agent should separate content reasoning from rendering: generate a structured `article.json` first, then use the bundled renderer to create WeChat-compatible HTML and preview HTML.
+Use this skill to produce a publication-ready WeChat Official Account draft from weekly group meeting materials. The article is always a reading-sharing meeting article; visual templates change the style, not the core meeting structure. Separate content reasoning from rendering: generate a structured `article.json` first, then use the bundled renderer to create WeChat-compatible HTML and preview HTML.
+
+## Intake Gate
+
+Before drafting, collect only the metadata that affects publication quality:
+
+- Material folder path.
+- Meeting date, or permission to infer it from materials.
+- Host when not obvious from materials.
+- Article editor when the closing credit should include one.
+- Preferred visual style if the user cares; otherwise use `classic`.
+- Whether provided images, PPT screenshots, certificates, or cover assets should be used.
+
+Do not ask a long questionnaire. Infer obvious details from filenames, PPT titles, transcripts, or user-provided choices. Ask one confirmation question only when a detail is missing, sensitive, contradictory, or likely to change the article emphasis.
 
 ## Workflow
 
-1. Inventory the input folder and identify available materials: transcript, English speeches, paper PDFs or abstracts, PPT files, policy notes, comments, images, and meeting metadata.
-2. Ask for missing publication metadata before drafting when not obvious: meeting date, host, article editor, whether the user has images to include, and whether they prefer `classic`, `notebook`, `briefing`, or `fieldnote` layout. Do not keep asking once these are clear or unavailable.
-3. Extract source text before writing. For `.docx`, `.pptx`, and `.pdf`, do not rely on raw file reads; use `scripts/extract_materials.py` or equivalent document parsers. Preserve speaker names, paper titles, DOI/URL fields, slide titles, and timestamps when available.
-4. Build source-grounded notes before writing. Do not invent attendees, papers, opinions, conclusions, or citations.
-5. Apply `references/editorial-style.md` before drafting. Keep sections flexible: omit unsupported sections instead of filling them with generic text.
-6. Create `article.json` with AI synthesis from the extracted materials and `references/input-contract.md`. Do not deliver deterministic scaffold output directly. Use `scripts/draft_article_from_materials.py extracted_materials --out article.scaffold.json` only as an optional inventory/scaffold aid, then write a separate expanded `article.json` from the sources.
-7. Render HTML:
+1. Inventory the input folder and identify available materials: transcript, English speeches, paper PDFs or abstracts, PPT files, policy notes, comments, images, certificates, honor-news documents, and meeting metadata.
+2. Apply the Intake Gate. Do not keep asking once details are clear, inferable, or the user has accepted defaults.
+3. Extract source text before writing. For `.docx`, `.pptx`, and `.pdf`, do not rely on raw file reads; use `scripts/extract_materials.py` or equivalent document parsers. PDFs are extracted in full by default; read selectively from the extracted text instead of stuffing entire long papers into context. Preserve speaker names, paper titles, DOI/URL fields, slide titles, and timestamps when available.
+4. Scan extracted materials for optional inserts such as honor news, announcements, project milestones, paper acceptances, activity notices, or supplied photos. Auto-include clearly publication-ready inserts; ask one confirmation question when they are ambiguous, sensitive, or incomplete.
+5. Build source-grounded notes before writing. Do not invent attendees, papers, opinions, conclusions, awards, or citations.
+6. Apply `references/editorial-style.md` before drafting. Keep sections flexible: omit unsupported sections instead of filling them with generic text.
+7. Create `article.json` with AI synthesis from the extracted materials and `references/input-contract.md`. Do not deliver deterministic scaffold output directly. Use `scripts/draft_article_from_materials.py extracted_materials --out article.scaffold.json` only as an optional inventory/scaffold aid, then write a separate expanded `article.json` from the sources.
+8. Render HTML:
 
 ```bash
 python scripts/render_wechat_article.py path/to/article.json --out dist
 ```
 
-8. Run `scripts/check_article_json.py article.json --html dist/article.wechat.html` and fix any warnings that affect publication quality.
-9. Review `dist/article.preview.html` for reading order, missing fields, overlong cards, and mobile layout. Fix `article.json` and rerun the renderer.
-10. Tell the user to import by opening `article.preview.html` in a browser, selecting the rendered page, and copying the rendered rich text into WeChat. Do not tell them to paste the raw `article.wechat.html` source into the WeChat editor.
-11. Deliver `article.wechat.html` as the primary HTML artifact. Only create a WeChat platform draft when credentials and API access are explicitly available.
+9. Run `scripts/check_article_json.py article.json --html dist/article.wechat.html` and fix any warnings that affect publication quality.
+10. Review `dist/article.preview.html` for reading order, missing fields, overlong cards, and mobile layout. Fix `article.json` and rerun the renderer.
+11. Tell the user to import by opening `article.preview.html` in a browser, selecting the rendered page, and copying the rendered rich text into WeChat. Do not tell them to paste the raw `article.wechat.html` source into the WeChat editor.
+12. Deliver `article.wechat.html` as the primary HTML artifact. Include the suggested WeChat title, digest, and cover suggestion in the final response. Only create a WeChat platform draft when credentials and API access are explicitly available.
 
 ## Dependency Setup
 
@@ -57,24 +71,43 @@ Default to these deliverables:
 - `article.json`: structured, editable source of truth.
 - `article.wechat.html`: WeChat-compatible HTML for copy/import into WeChat, doocs/md, 135, Xiumi, or a custom uploader.
 - `article.preview.html`: browser preview wrapper for checking layout before import.
-- `source_trace.md`: brief mapping from major claims to source files or transcript excerpts.
+
+Do not create `source_trace.md` by default. Create it only when the user asks for traceability, audit notes, reviewer checking, citation mapping, or a rigorous verification package. Keep `source` fields in `article.json` for private agent verification.
 
 Prefer "create draft, then human review" over direct publishing. Do not directly publish through the WeChat API unless the user explicitly asks for automated publication and provides/approves the required credentials.
 
 ## Content Rules
 
 - Keep the article suitable for mobile reading: short paragraphs, clear section headings, readable line spacing, and restrained emphasis.
-- Preserve the four expected meeting sections when materials support them: English exchange, literature sharing, current affairs or policy discussion, free discussion and meeting summary.
+- Preserve the expected reading-sharing meeting flow when materials support it: lead summary, English exchange, literature sharing, current affairs or policy discussion when present, free discussion and meeting summary.
 - Omit any section that lacks source material. Do not force a current-affairs/policy section into older meetings that did not include one.
+- Use `custom_sections` for occasional inserts within the meeting flow, such as a student award, project milestone, paper acceptance, announcement, or photo note. Do not turn the article into a separate news article unless the user asks.
 - English speech cards should show one speaker per card. If the user provides each person's English speech draft, publish the full original text by default; do not summarize or polish it unless explicitly asked.
 - Literature sections must distinguish paper facts from meeting comments. Expand paper introductions into background, research question, methods/data, core findings, and discussion value when the source supports it. If paper metadata is incomplete, mark it for confirmation instead of guessing.
+- Treat audio transcription files as noisy evidence. Use them to recover stable discussion meaning, but cross-check names, dates, paper titles, awards, technical terms, and strong claims against PPT/PDF/filenames. Silently repair only obvious ASR errors; ask one confirmation question when ambiguity changes a public fact.
 - Policy/current-affairs sections should summarize viewpoints neutrally and attribute them to roles or speakers when available.
 - Meeting summaries should be concise and avoid unsupported claims about consensus.
 - Keep `source` fields for traceability only. Do not display filenames, local paths, or transcript names in the WeChat article body.
-- Use provided meeting photos, PPT screenshots, paper figures, or generated cover assets when available and relevant. Do not invent data-bearing academic figures.
-- If no usable images are provided, include image placement suggestions in the final response or `source_trace.md` instead of fabricating figures.
+- Use provided meeting photos, PPT screenshots, certificates, paper figures, or generated cover assets when available and relevant. Do not invent data-bearing academic figures.
+- If the active model cannot inspect images, use text extraction and filenames to identify image candidates, then list placement suggestions instead of blocking the draft.
+- If no usable images are provided, include image placement suggestions in the final response instead of fabricating figures.
 - Keep the default `zhengeryanzi` theme restrained: no top brand card, static section marks, subtle dividers, and a closing signature with host/editor credits.
-- Use `template: "classic"` as the default concise/intro layout. Offer `notebook`, `briefing`, or `fieldnote` when the user wants visual variation; pair with one palette from `classic`, `forest`, `blueprint`, or `warm`.
+- Use `template: "classic"` as the default concise layout. Supported reading-sharing styles are `classic`, `notebook`, `journal`, `campus`, `minimal`, `magazine`, `warm-note`, `briefing`, and `fieldnote`. Pair with one palette from `classic`, `forest`, `blueprint`, `warm`, `ink`, `sunrise`, or `mono`.
+
+## Reusable Components
+
+The renderer provides reusable components that templates style differently:
+
+- `lead_summary`: the opening guide card.
+- `section_heading`: numbered meeting section headings.
+- `english_speech_cards`: horizontal English speech cards.
+- `paper_digest`: literature paper blocks.
+- `teacher_comment` and `student_discussion`: quote blocks.
+- `honor_insert`, `announcement_insert`, and `milestone_insert`: optional meeting-flow inserts.
+- `image_caption`: supplied image with caption.
+- `closing_signature`: account and host/editor credits.
+
+Keep components conservative and WeChat-friendly. Static SVG marks, thin dividers, number chips, soft backgrounds, and small badges are safe. Use animation only with `experimental_motion: true`; every animated element must remain readable if animation is stripped by WeChat.
 
 ## Resource Guide
 
@@ -87,7 +120,7 @@ Prefer "create draft, then human review" over direct publishing. Do not directly
 - Use `scripts/draft_article_from_materials.py` only to create `article.scaffold.json` as an inventory/scaffold aid. Never treat scaffold output as the final article.
 - Use `scripts/create_article_json.py` to create a valid starter JSON file.
 - Use `scripts/render_wechat_article.py` for deterministic HTML output.
-- Use `scripts/check_article_json.py` before delivery to catch source filename leaks, missing literature structure, and suspiciously short English speeches.
+- Use `scripts/check_article_json.py` before delivery to catch source filename leaks, missing literature structure, suspiciously short English speeches, duplicate English speeches, empty publication metadata, and incomplete optional inserts.
 - Use `assets/article-template.html` as the HTML template if the renderer needs visual changes.
 
 ## Cross-Agent Portability

@@ -91,7 +91,24 @@ def extract_pptx(path: Path) -> str:
     return "\n\n".join(slides)
 
 
-def extract_pdf(path: Path, max_pages: int) -> str:
+def parse_pdf_pages(value: str) -> int | None:
+    normalized = str(value).strip().lower()
+    if normalized in {"all", "full", "*"}:
+        return None
+    try:
+        pages = int(normalized)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("--pdf-pages must be a positive integer or 'all'") from exc
+    if pages <= 0:
+        raise argparse.ArgumentTypeError("--pdf-pages must be a positive integer or 'all'")
+    return pages
+
+
+def requested_pages_label(value: int | None) -> str:
+    return "all" if value is None else str(value)
+
+
+def extract_pdf(path: Path, max_pages: int | None) -> tuple[str, dict[str, Any]]:
     try:
         import pdfplumber
     except ImportError:
@@ -99,13 +116,22 @@ def extract_pdf(path: Path, max_pages: int) -> str:
 
     if pdfplumber is not None:
         pages: list[str] = []
+        total_pages = 0
         with pdfplumber.open(str(path)) as pdf:
-            for index, page in enumerate(pdf.pages[:max_pages], start=1):
+            total_pages = len(pdf.pages)
+            selected_pages = pdf.pages if max_pages is None else pdf.pages[:max_pages]
+            for index, page in enumerate(selected_pages, start=1):
                 text = page.extract_text() or ""
                 if text.strip():
                     pages.append(f"## Page {index}\n\n{text.strip()}")
+        metadata = {
+            "pdf_pages_total": total_pages,
+            "pdf_pages_extracted": total_pages if max_pages is None else min(max_pages, total_pages),
+            "pdf_pages_requested": requested_pages_label(max_pages),
+            "pdf_text_pages": len(pages),
+        }
         if pages:
-            return "\n\n".join(pages)
+            return "\n\n".join(pages), metadata
 
     try:
         from pypdf import PdfReader
@@ -114,23 +140,31 @@ def extract_pdf(path: Path, max_pages: int) -> str:
 
     reader = PdfReader(str(path))
     pages = []
-    for index, page in enumerate(reader.pages[:max_pages], start=1):
+    total_pages = len(reader.pages)
+    selected_pages = reader.pages if max_pages is None else reader.pages[:max_pages]
+    for index, page in enumerate(selected_pages, start=1):
         text = page.extract_text() or ""
         if text.strip():
             pages.append(f"## Page {index}\n\n{text.strip()}")
-    return "\n\n".join(pages)
+    return "\n\n".join(pages), {
+        "pdf_pages_total": total_pages,
+        "pdf_pages_extracted": total_pages if max_pages is None else min(max_pages, total_pages),
+        "pdf_pages_requested": requested_pages_label(max_pages),
+        "pdf_text_pages": len(pages),
+    }
 
 
-def extract_one(path: Path, pdf_pages: int) -> tuple[str, str]:
+def extract_one(path: Path, pdf_pages: int | None) -> tuple[str, str, dict[str, Any]]:
     suffix = path.suffix.lower()
     if suffix == ".docx":
-        return "docx", extract_docx(path)
+        return "docx", extract_docx(path), {}
     if suffix == ".pptx":
-        return "pptx", extract_pptx(path)
+        return "pptx", extract_pptx(path), {}
     if suffix == ".pdf":
-        return "pdf", extract_pdf(path, pdf_pages)
+        text, metadata = extract_pdf(path, pdf_pages)
+        return "pdf", text, metadata
     if suffix in {".txt", ".md"}:
-        return suffix.lstrip("."), read_text_file(path)
+        return suffix.lstrip("."), read_text_file(path), {}
     raise ValueError(f"unsupported file type: {suffix}")
 
 
@@ -139,7 +173,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("input_dir", type=Path)
     parser.add_argument("--out", type=Path, default=Path("extracted_materials"))
-    parser.add_argument("--pdf-pages", type=int, default=5)
+    parser.add_argument("--pdf-pages", type=parse_pdf_pages, default=None)
     args = parser.parse_args()
 
     input_dir = args.input_dir.resolve()
@@ -161,8 +195,11 @@ def main() -> int:
             "status": "ok",
         }
         try:
-            detected_type, text = extract_one(path, args.pdf_pages)
+            detected_type, text, metadata = extract_one(path, args.pdf_pages)
             record["type"] = detected_type
+            record.update(metadata)
+            if detected_type == "pdf" and metadata.get("pdf_text_pages") == 0:
+                record["warning"] = "No extractable text found in selected PDF pages; the PDF may be scanned or image-based."
             output_path.write_text(
                 f"# {path.name}\n\nSource: `{path}`\n\n{text.strip()}\n",
                 encoding="utf-8",

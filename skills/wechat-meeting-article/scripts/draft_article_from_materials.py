@@ -13,6 +13,11 @@ from typing import Any
 
 SPEAKER_RE = re.compile(r"^(?P<name>[A-Za-z][A-Za-z ._-]{1,30}|[\u4e00-\u9fff]{2,8})(?:[:：])?$")
 DOI_RE = re.compile(r"\b10\.\d{4,9}/[-._;()/:A-Za-z0-9]+\b")
+INSERT_KEYWORDS = {
+    "honor_news": ("喜讯", "祝贺", "获奖", "荣获", "立项", "入选", "录用", "证书"),
+    "announcement": ("通知", "提醒", "安排", "报名", "会议预告"),
+    "milestone": ("进展", "成果", "阶段", "发布", "完成"),
+}
 
 
 def configure_stdio() -> None:
@@ -118,6 +123,22 @@ def paper_from_markdown(path: Path, text: str) -> dict[str, Any]:
     }
 
 
+def optional_insert_from_markdown(path: Path, text: str) -> dict[str, Any] | None:
+    haystack = f"{path.name}\n{text[:3000]}"
+    for kind, keywords in INSERT_KEYWORDS.items():
+        if any(keyword in haystack for keyword in keywords):
+            title = "喜讯" if kind == "honor_news" else "通知" if kind == "announcement" else "阶段进展"
+            return {
+                "type": kind,
+                "placement": "after_lead" if kind == "honor_news" else "before_closing",
+                "title": title,
+                "text": compact(text, 320),
+                "images": [],
+                "source": path.name,
+            }
+    return None
+
+
 def classify_files(input_dir: Path) -> tuple[list[Path], list[Path], list[Path]]:
     markdowns = sorted(input_dir.glob("*.md"))
     english = [p for p in markdowns if any(key in p.name.lower() for key in ("英语", "english", "speech"))]
@@ -143,6 +164,11 @@ def build_article(input_dir: Path) -> dict[str, Any]:
                 "source": path.name,
             }
         )
+    custom_sections = []
+    for path in english_files + paper_files + transcript_files:
+        insert = optional_insert_from_markdown(path, read_text(path))
+        if insert:
+            custom_sections.append(insert)
 
     sections: dict[str, Any] = {}
     if speeches:
@@ -190,6 +216,7 @@ def build_article(input_dir: Path) -> dict[str, Any]:
         "template": "classic",
         "palette": "classic",
         "sections": sections,
+        "custom_sections": custom_sections,
         "assets": {"images": []},
     }
 

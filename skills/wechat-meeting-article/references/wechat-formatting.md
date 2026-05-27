@@ -64,6 +64,10 @@ This makes the literature section feel like a public-facing academic reading not
 
 Use SVG only when the user specifically wants a WeChat SVG interaction style and accepts extra testing. Keep SVG self-contained, avoid scripts, external assets, filters, and fragile IDs. Provide a non-SVG HTML card fallback.
 
+## Motion Guidance
+
+Motion is optional and experimental. Use it only when `experimental_motion` is true and the user agrees to preview in WeChat. Prefer tiny self-contained SVG or CSS motion that degrades to a static divider, badge, or section mark. Do not use JavaScript, scroll-triggered effects, external assets, or motion that hides text when stripped.
+
 ## Visual Tone
 
 Use a restrained academic style:
@@ -73,4 +77,13 @@ Use a restrained academic style:
 - Section headers: clear but compact.
 - Quotes/comments: left border or subtle background, not oversized decorative cards.
 - For the `zhengeryanzi` theme, keep inline SVG decorations static and restrained: section marks and closing signature. Avoid a large top brand card. Avoid animation unless explicitly requested and preview-tested.
-- Supported layouts are `classic`, `notebook`, `briefing`, and `fieldnote`; supported palettes are `classic`, `forest`, `blueprint`, and `warm`. These are inline-style variants intended to survive WeChat editor import.
+- Supported reading-sharing layouts are `classic`, `notebook`, `journal`, `campus`, `minimal`, `magazine`, `warm-note`, `briefing`, and `fieldnote`; supported palettes are `classic`, `forest`, `blueprint`, `warm`, `ink`, `sunrise`, and `mono`. These are inline-style variants intended to survive WeChat editor import.
+
+## Optional Insert Blocks
+
+Insert blocks should be visually distinct but brief:
+
+- Honor news: compact celebration block with a small badge, award/person metadata, optional certificate or photo, and a short congratulatory paragraph.
+- Announcement: notice block with title, date or target audience when supplied, and a short action or context line.
+- Milestone: understated progress block with milestone title, date, and one concise explanation.
+- Note: small aside block for contextual information.

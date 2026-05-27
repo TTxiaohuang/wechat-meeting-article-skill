@@ -23,6 +23,7 @@ BRAND_GREEN = "#0f9f76"
 BRAND_GOLD = "#b58a3a"
 CURRENT_TEMPLATE = "classic"
 CURRENT_PALETTE = "classic"
+CURRENT_MOTION = False
 
 PALETTES: dict[str, dict[str, str]] = {
     "classic": {
@@ -57,6 +58,30 @@ PALETTES: dict[str, dict[str, str]] = {
         "border": "#eadbd2",
         "line": "#efe5de",
     },
+    "ink": {
+        "accent": "#2f3a45",
+        "accent_2": "#7a6048",
+        "soft": "#f4f5f5",
+        "warm": "#faf7f1",
+        "border": "#dfe3e6",
+        "line": "#e8eaec",
+    },
+    "sunrise": {
+        "accent": "#b85d48",
+        "accent_2": "#2f7a68",
+        "soft": "#fff3ef",
+        "warm": "#fff8df",
+        "border": "#f0d5c9",
+        "line": "#f1e4dd",
+    },
+    "mono": {
+        "accent": "#3f4650",
+        "accent_2": "#686f78",
+        "soft": "#f6f7f8",
+        "warm": "#fafafa",
+        "border": "#e1e4e8",
+        "line": "#eceff2",
+    },
 }
 
 TEMPLATE_ALIASES = {
@@ -67,8 +92,24 @@ TEMPLATE_ALIASES = {
     "report": "briefing",
     "reading-note": "notebook",
     "notes": "notebook",
+    "warmnote": "warm-note",
+    "warm_notes": "warm-note",
+    "academic": "journal",
+    "school": "campus",
+    "clean": "minimal",
+    "editorial": "magazine",
 }
-SUPPORTED_TEMPLATES = {"classic", "notebook", "briefing", "fieldnote"}
+SUPPORTED_TEMPLATES = {
+    "classic",
+    "notebook",
+    "journal",
+    "campus",
+    "minimal",
+    "magazine",
+    "warm-note",
+    "briefing",
+    "fieldnote",
+}
 
 
 def configure_stdio() -> None:
@@ -89,7 +130,7 @@ def normalize_choice(value: Any, allowed: set[str], default: str, aliases: dict[
 
 
 def apply_visual_style(article: dict[str, Any]) -> tuple[str, str]:
-    global ACCENT, ACCENT_2, SOFT, WARM, BORDER, LINE, CURRENT_TEMPLATE, CURRENT_PALETTE
+    global ACCENT, ACCENT_2, SOFT, WARM, BORDER, LINE, CURRENT_TEMPLATE, CURRENT_PALETTE, CURRENT_MOTION
 
     meta = article.get("meta") or {}
     template = normalize_choice(article.get("template") or meta.get("template"), SUPPORTED_TEMPLATES, "classic", TEMPLATE_ALIASES)
@@ -104,6 +145,7 @@ def apply_visual_style(article: dict[str, Any]) -> tuple[str, str]:
     LINE = colors["line"]
     CURRENT_TEMPLATE = template
     CURRENT_PALETTE = palette
+    CURRENT_MOTION = bool(article.get("experimental_motion") or meta.get("experimental_motion"))
     return template, palette
 
 
@@ -171,6 +213,21 @@ def brand_section_mark() -> str:
     )
 
 
+def sparkle_mark(size: int = 20) -> str:
+    animate = (
+        '<animate attributeName="opacity" values="0.65;1;0.65" dur="1.8s" repeatCount="indefinite"/>'
+        if CURRENT_MOTION
+        else ""
+    )
+    return (
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}" viewBox="0 0 32 32" '
+        f'fill="none" style="display:inline-block;vertical-align:-4px;margin-right:6px;">'
+        f'<path d="M16 4l3.2 8.2L28 16l-8.8 3.8L16 28l-3.2-8.2L4 16l8.8-3.8L16 4z" '
+        f'fill="{WARM}" stroke="{ACCENT_2}" stroke-width="2" stroke-linejoin="round">{animate}</path>'
+        f'</svg>'
+    )
+
+
 def h2(title: str, index: int | None = None, branded: bool = False) -> str:
     number = f"{index:02d}" if index is not None else ""
     number_html = (
@@ -184,6 +241,48 @@ def h2(title: str, index: int | None = None, branded: bool = False) -> str:
         return (
             f'<section style="margin:30px 0 14px;padding:10px 12px;border-left:4px solid {ACCENT};'
             f'background:{SOFT};border-radius:0 8px 8px 0;">'
+            f'<p style="margin:0;color:{TEXT};font-size:19px;font-weight:800;line-height:1.45;">'
+            f'{title_html}</p>'
+            "</section>"
+        )
+    if CURRENT_TEMPLATE == "journal":
+        return (
+            f'<section style="margin:30px 0 13px;padding:0 0 9px;border-bottom:1px solid {LINE};">'
+            f'<p style="margin:0;color:{ACCENT_2};font-size:12px;font-weight:800;line-height:1.4;">'
+            f'{number or "SECTION"}</p>'
+            f'<p style="margin:3px 0 0;color:{TEXT};font-size:20px;font-weight:800;line-height:1.45;">'
+            f'{brand_section_mark() if branded else ""}{esc(title)}</p>'
+            "</section>"
+        )
+    if CURRENT_TEMPLATE == "campus":
+        return (
+            f'<section style="margin:30px 0 14px;padding:11px 13px;border:1px solid {BORDER};'
+            f'border-radius:8px;background:{SOFT};">'
+            f'<p style="margin:0;color:{TEXT};font-size:19px;font-weight:800;line-height:1.45;">'
+            f'{number_html}{brand_section_mark() if branded else ""}{esc(title)}</p>'
+            "</section>"
+        )
+    if CURRENT_TEMPLATE == "minimal":
+        return (
+            f'<section style="margin:28px 0 12px;padding:0 0 6px;border-bottom:1px solid {LINE};">'
+            f'<p style="margin:0;color:{TEXT};font-size:18px;font-weight:800;line-height:1.45;">'
+            f'{number_html}{esc(title)}</p>'
+            "</section>"
+        )
+    if CURRENT_TEMPLATE == "magazine":
+        return (
+            f'<section style="margin:32px 0 15px;padding:0;">'
+            f'<p style="margin:0;color:{ACCENT_2};font-size:13px;font-weight:800;line-height:1.4;">'
+            f'{number or "READ"}</p>'
+            f'<p style="margin:3px 0 0;color:{TEXT};font-size:21px;font-weight:900;line-height:1.35;">'
+            f'{brand_section_mark() if branded else ""}{esc(title)}</p>'
+            f'<p style="margin:8px 0 0;width:100%;border-top:3px solid {ACCENT};"></p>'
+            "</section>"
+        )
+    if CURRENT_TEMPLATE == "warm-note":
+        return (
+            f'<section style="margin:30px 0 14px;padding:10px 12px;border:1px solid {BORDER};'
+            f'border-left:5px solid {ACCENT_2};border-radius:8px;background:{WARM};">'
             f'<p style="margin:0;color:{TEXT};font-size:19px;font-weight:800;line-height:1.45;">'
             f'{title_html}</p>'
             "</section>"
@@ -248,6 +347,20 @@ def quote_block(text: str, speaker: str = "") -> str:
         if speaker
         else ""
     )
+    if CURRENT_TEMPLATE == "minimal":
+        return (
+            f'<blockquote style="margin:10px 0 0;padding:0 0 0 11px;border-left:2px solid {BORDER};'
+            f'color:{TEXT};line-height:1.75;">'
+            f"{label_html}{paragraphs(text, size=14, margin_top=0)}"
+            "</blockquote>"
+        )
+    if CURRENT_TEMPLATE == "journal":
+        return (
+            f'<blockquote style="margin:10px 0 0;padding:10px 0 10px 12px;border-left:3px solid {ACCENT_2};'
+            f'border-top:1px solid {LINE};border-bottom:1px solid {LINE};color:{TEXT};line-height:1.75;">'
+            f"{label_html}{paragraphs(text, size=14, margin_top=0)}"
+            "</blockquote>"
+        )
     return (
         f'<blockquote style="margin:10px 0 0;padding:11px 13px;border-left:3px solid {ACCENT};'
         f'background:{SOFT};color:{TEXT};line-height:1.75;">'
@@ -283,6 +396,44 @@ def render_section_images(images: list[Any]) -> str:
 def render_summary_card(summary: str) -> str:
     if not summary:
         return ""
+    if CURRENT_TEMPLATE == "minimal":
+        return (
+            f'<section style="margin:12px 0 4px;padding:0 0 12px;border-bottom:1px solid {LINE};">'
+            f'<p style="margin:0;color:{ACCENT};font-size:14px;font-weight:800;line-height:1.5;">本期导读</p>'
+            f'{paragraphs(summary, size=14, margin_top=5)}'
+            "</section>"
+        )
+    if CURRENT_TEMPLATE == "journal":
+        return (
+            f'<section style="margin:12px 0 4px;padding:12px 0;border-top:1px solid {LINE};border-bottom:1px solid {LINE};">'
+            f'<p style="margin:0;color:{ACCENT_2};font-size:13px;font-weight:800;line-height:1.5;">ABSTRACT</p>'
+            f'{paragraphs(summary, size=14, margin_top=5)}'
+            "</section>"
+        )
+    if CURRENT_TEMPLATE == "campus":
+        return (
+            f'<section style="margin:12px 0 4px;padding:14px 15px;border-radius:8px;'
+            f'background:{SOFT};border:1px solid {BORDER};">'
+            f'<p style="margin:0;color:{ACCENT};font-size:15px;font-weight:900;line-height:1.5;">本期导读</p>'
+            f'{paragraphs(summary, size=14, margin_top=5)}'
+            "</section>"
+        )
+    if CURRENT_TEMPLATE == "magazine":
+        return (
+            f'<section style="margin:14px 0 4px;padding:15px 0 14px;border-top:3px solid {ACCENT};'
+            f'border-bottom:1px solid {LINE};">'
+            f'<p style="margin:0;color:{ACCENT};font-size:15px;font-weight:900;line-height:1.5;">本期导读</p>'
+            f'{paragraphs(summary, size=15, margin_top=5)}'
+            "</section>"
+        )
+    if CURRENT_TEMPLATE == "warm-note":
+        return (
+            f'<section style="margin:12px 0 4px;padding:13px 14px;border-radius:8px;'
+            f'background:{WARM};border:1px dashed {BORDER};">'
+            f'<p style="margin:0;color:{ACCENT_2};font-size:14px;font-weight:800;line-height:1.5;">本期导读</p>'
+            f'{paragraphs(summary, size=14, margin_top=5)}'
+            "</section>"
+        )
     if CURRENT_TEMPLATE == "briefing":
         return (
             f'<section style="margin:12px 0 4px;padding:13px 14px;border-top:2px solid {ACCENT_2};'
@@ -305,6 +456,98 @@ def render_summary_card(summary: str) -> str:
         f'{paragraphs(summary, size=14, margin_top=5)}'
         "</section>"
     )
+
+
+def insert_badge(label: str) -> str:
+    return (
+        f'<span style="display:inline-block;margin:0 0 8px;padding:2px 9px;border-radius:999px;'
+        f'background:{ACCENT};color:#ffffff;font-size:12px;font-weight:800;line-height:1.6;">{esc(label)}</span>'
+    )
+
+
+def render_custom_insert(item: dict[str, Any]) -> str:
+    kind = normalize_choice(
+        item.get("type") or item.get("kind"),
+        {"honor-news", "honor_news", "announcement", "milestone", "note"},
+        "note",
+    ).replace("_", "-")
+    title = item.get("title") or {
+        "honor-news": "喜讯",
+        "announcement": "通知",
+        "milestone": "进展",
+        "note": "插播",
+    }.get(kind, "插播")
+    text = item.get("text") or item.get("summary") or ""
+    if not text and kind != "honor-news":
+        return ""
+
+    images_html = render_section_images(item.get("images") or [])
+    meta_parts = [item.get("person"), item.get("award"), item.get("organization"), item.get("date")]
+    meta_line = " ｜ ".join(str(part).strip() for part in meta_parts if part)
+    body = text
+    if kind == "honor-news" and not body:
+        person = item.get("person") or "同学"
+        award = item.get("award") or "相关荣誉"
+        body = f"祝贺{person}荣获{award}。"
+
+    if kind == "honor-news":
+        return (
+            f'<section data-insert="honor-news" style="margin:18px 0;padding:15px 14px;border-radius:8px;'
+            f'border:1px solid {BORDER};background:{WARM};">'
+            f'<p style="margin:0;color:{ACCENT_2};font-size:14px;font-weight:900;line-height:1.5;">'
+            f'{sparkle_mark(20)}{esc(title)}</p>'
+            f'{f"<p style=\'margin:5px 0 0;color:{MUTED};font-size:13px;line-height:1.55;\'>{esc(meta_line)}</p>" if meta_line else ""}'
+            f'{paragraphs(body, size=14, margin_top=7)}'
+            f'{images_html}'
+            "</section>"
+        )
+
+    if kind == "announcement":
+        return (
+            f'<section data-insert="announcement" style="margin:16px 0;padding:13px 14px;border-left:4px solid {ACCENT};'
+            f'background:{SOFT};">'
+            f'{insert_badge("插播通知")}'
+            f'<p style="margin:0;color:{TEXT};font-size:17px;font-weight:800;line-height:1.45;">{esc(title)}</p>'
+            f'{f"<p style=\'margin:4px 0 0;color:{MUTED};font-size:13px;line-height:1.55;\'>{esc(meta_line)}</p>" if meta_line else ""}'
+            f'{paragraphs(body, size=14, margin_top=7)}'
+            f'{images_html}'
+            "</section>"
+        )
+
+    if kind == "milestone":
+        return (
+            f'<section data-insert="milestone" style="margin:16px 0;padding:13px 0;border-top:1px solid {LINE};'
+            f'border-bottom:1px solid {LINE};">'
+            f'<p style="margin:0;color:{ACCENT};font-size:14px;font-weight:900;line-height:1.5;">阶段进展</p>'
+            f'<p style="margin:3px 0 0;color:{TEXT};font-size:17px;font-weight:800;line-height:1.45;">{esc(title)}</p>'
+            f'{f"<p style=\'margin:4px 0 0;color:{MUTED};font-size:13px;line-height:1.55;\'>{esc(meta_line)}</p>" if meta_line else ""}'
+            f'{paragraphs(body, size=14, margin_top=7)}'
+            f'{images_html}'
+            "</section>"
+        )
+
+    return (
+        f'<section data-insert="note" style="margin:14px 0;padding:12px 13px;border:1px solid {BORDER};'
+        f'border-radius:8px;background:#ffffff;">'
+        f'<p style="margin:0;color:{ACCENT};font-size:15px;font-weight:800;line-height:1.5;">{esc(title)}</p>'
+        f'{paragraphs(body, size=14, margin_top=6)}'
+        f'{images_html}'
+        "</section>"
+    )
+
+
+def render_custom_sections(article: dict[str, Any], placement: str) -> str:
+    inserts = article.get("custom_sections") or article.get("inserts") or []
+    if not isinstance(inserts, list):
+        return ""
+    rendered = []
+    for item in inserts:
+        if not isinstance(item, dict):
+            continue
+        item_placement = item.get("placement") or "after_lead"
+        if item_placement == placement:
+            rendered.append(render_custom_insert(item))
+    return "".join(rendered)
 
 
 def render_english(data: dict[str, Any], index: int, branded: bool = False) -> str:
@@ -445,6 +688,7 @@ def render_article(article: dict[str, Any]) -> str:
         parts.append(render_image({"url": cover, "caption": meta.get("cover_caption") or ""}))
     if meta.get("summary"):
         parts.append(render_summary_card(meta.get("summary") or ""))
+    parts.append(render_custom_sections(article, "after_lead"))
 
     section_order = [
         ("english_exchange", render_english),
@@ -454,9 +698,12 @@ def render_article(article: dict[str, Any]) -> str:
     ]
     visible_index = 1
     for key, renderer in section_order:
+        parts.append(render_custom_sections(article, f"before_{key}"))
         if sections.get(key):
             parts.append(renderer(sections[key], visible_index, branded))
             visible_index += 1
+        parts.append(render_custom_sections(article, f"after_{key}"))
+    parts.append(render_custom_sections(article, "before_closing"))
     if branded:
         parts.append(render_brand_signature(meta))
     parts.append("</section>")

@@ -45,6 +45,32 @@ class SkillScriptTests(unittest.TestCase):
         self.assertNotIn("/", value)
         self.assertIn("链_岛_成_陆_公共数据开放_研究", value)
 
+    def test_extract_materials_defaults_to_full_pdf_extraction_metadata(self) -> None:
+        try:
+            from pypdf import PdfWriter
+        except ImportError:
+            self.skipTest("pypdf is not installed")
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            pdf_path = tmp_path / "paper.pdf"
+            writer = PdfWriter()
+            writer.add_blank_page(width=200, height=200)
+            writer.add_blank_page(width=200, height=200)
+            with pdf_path.open("wb") as handle:
+                writer.write(handle)
+
+            out_dir = tmp_path / "extracted"
+            result = run_script("extract_materials.py", str(tmp_path), "--out", str(out_dir))
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            manifest = json.loads((out_dir / "materials_manifest.json").read_text(encoding="utf-8"))
+            record = manifest["files"][0]
+            self.assertEqual(record["type"], "pdf")
+            self.assertEqual(record["pdf_pages_total"], 2)
+            self.assertEqual(record["pdf_pages_requested"], "all")
+            self.assertEqual(record["pdf_pages_extracted"], 2)
+
     def test_draft_article_from_materials_creates_editable_article_json(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)

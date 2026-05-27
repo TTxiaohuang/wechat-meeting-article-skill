@@ -99,6 +99,7 @@ def starter_article() -> dict:
                 "closing": "",
             },
         },
+        "custom_sections": [],
         "assets": {"images": []},
     }
 

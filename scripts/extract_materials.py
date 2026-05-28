@@ -174,6 +174,8 @@ def main() -> int:
     parser.add_argument("input_dir", type=Path)
     parser.add_argument("--out", type=Path, default=Path("extracted_materials"))
     parser.add_argument("--pdf-pages", type=parse_pdf_pages, default=None)
+    parser.add_argument("--no-recursive", action="store_true",
+                        help="Only scan top-level files, do not recurse into subdirectories")
     args = parser.parse_args()
 
     input_dir = args.input_dir.resolve()
@@ -181,12 +183,20 @@ def main() -> int:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     supported = {".docx", ".pptx", ".pdf", ".txt", ".md"}
-    files = [p for p in sorted(input_dir.iterdir()) if p.is_file() and p.suffix.lower() in supported]
+    if args.no_recursive:
+        files = [p for p in sorted(input_dir.iterdir()) if p.is_file() and p.suffix.lower() in supported]
+    else:
+        files = [p for p in sorted(input_dir.rglob("*")) if p.is_file() and p.suffix.lower() in supported]
     manifest: dict[str, Any] = {"input_dir": str(input_dir), "files": []}
     had_error = False
 
     for path in files:
-        output_name = f"{slug(path.stem)}.md"
+        rel = path.relative_to(input_dir)
+        if len(rel.parts) > 1:
+            prefix = slug("_".join(rel.parts[:-1]))
+            output_name = f"{prefix}_{slug(path.stem)}.md"
+        else:
+            output_name = f"{slug(path.stem)}.md"
         output_path = out_dir / output_name
         record: dict[str, Any] = {
             "source": str(path),
@@ -215,7 +225,8 @@ def main() -> int:
         json.dumps(manifest, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
-    print(f"Scanned {len(files)} supported files from {input_dir}")
+    scope = "top-level" if args.no_recursive else "recursive"
+    print(f"Scanned {len(files)} supported files from {input_dir} ({scope})")
     print(f"Wrote manifest: {out_dir / 'materials_manifest.json'}")
     if had_error:
         print(DEPENDENCY_HELP, file=sys.stderr)

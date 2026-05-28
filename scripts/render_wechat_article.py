@@ -130,17 +130,6 @@ SUPPORTED_TEMPLATES = {
     "magazine",
     "briefing",
 }
-SUPPORTED_TEMPLATES = {
-    "classic",
-    "notebook",
-    "journal",
-    "campus",
-    "minimal",
-    "magazine",
-    "warm-note",
-    "briefing",
-    "fieldnote",
-}
 
 
 def configure_stdio() -> None:

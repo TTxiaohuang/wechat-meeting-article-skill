@@ -13,6 +13,14 @@ The script writes:
 - one Markdown text file per supported source file
 - `materials_manifest.json` with source paths, output paths, status, extraction metadata, and errors
 
+By default, the script scans all subdirectories recursively. To limit scanning to top-level files only:
+
+```bash
+python scripts/extract_materials.py path/to/material-folder --out extracted_materials --no-recursive
+```
+
+When files in different subdirectories have the same filename, the subdirectory path is prepended to the output filename to avoid collisions (e.g., `subdir/paper.md` becomes `subdir_paper.md`).
+
 Output filenames are sanitized for agent and shell compatibility. Quote-like characters, path separators, and other fragile punctuation are replaced with underscores. The original source path is preserved in `materials_manifest.json`.
 
 All supported file types (`.docx`, `.pptx`, `.pdf`, `.txt`, `.md`) are extracted in full by default. For PDFs, the manifest additionally records page counts. To limit PDF extraction to a specific number of pages:
@@ -105,10 +113,10 @@ ASR transcription typically produces generic labels (`发言人1`, `发言人2`,
 
 When multiple date sources exist, use this priority order:
 
-1. **Transcript timestamp** (highest): If the audio transcription file has an embedded date/time stamp, this is the most reliable meeting date.
-2. **User-provided date**: If the user explicitly states the meeting date.
+1. **User-provided date** (highest): If the user explicitly states the meeting date, this overrides all other sources. User intent is authoritative.
+2. **Transcript timestamp**: If the audio transcription file has an embedded date/time stamp, this is the most reliable meeting date when the user has not specified one.
 3. **PPT metadata date**: The PPT file's creation/modification date. Be cautious — this may be the date the PPT was created, not the meeting date.
 4. **Filename date**: Dates embedded in filenames (e.g., "4月27日编辑组会录音.mp3").
 5. **File modification date** (lowest): The OS file modification timestamp, which can be unreliable.
 
-When sources conflict, note the conflict and ask the user to confirm which date to use.
+When sources conflict, note the conflict and ask the user to confirm which date to use. Always prioritize user-provided information over automated inference.

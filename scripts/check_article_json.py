@@ -19,11 +19,6 @@ SUPPORTED_TEMPLATES = {
     "campus",
     "magazine",
     "briefing",
-    # Legacy names accepted via renderer aliases
-    "journal",
-    "minimal",
-    "warm-note",
-    "fieldnote",
 }
 SUPPORTED_PALETTES = {"classic", "forest", "blueprint", "warm", "ink", "sunrise", "mono", "sakura", "ocean"}
 SUPPORTED_INSERT_TYPES = {"honor_news", "honor-news", "announcement", "milestone", "note"}

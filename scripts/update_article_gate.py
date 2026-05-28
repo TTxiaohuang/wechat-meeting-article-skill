@@ -54,7 +54,7 @@ def main() -> int:
     material_folder = args.material_folder
     date = args.date or str(meta.get("date") or "")
     template = args.template or str(article.get("template") or meta.get("template") or "classic")
-    palette = args.palette or str(article.get("palette") or meta.get("palette") or template)
+    palette = args.palette or str(article.get("palette") or meta.get("palette") or "classic")
     editor = args.editor or str(meta.get("editor") or meta.get("article_editor") or "")
     editor_status = args.editor_status or ("user_provided" if editor else "omitted_confirmed")
 

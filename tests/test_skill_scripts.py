@@ -521,6 +521,84 @@ class SkillScriptTests(unittest.TestCase):
             self.assertIn("#2f5f8f", html)
             self.assertIn("border-top:2px solid", html)
 
+    def test_extract_materials_recurses_into_subdirectories(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            sub = tmp_path / "英语交流"
+            sub.mkdir()
+            (sub / "speech.md").write_text("# Speech\n\nHello world\n", encoding="utf-8")
+            (tmp_path / "paper.md").write_text("# Paper\n\nAbstract text\n", encoding="utf-8")
+
+            out_dir = tmp_path / "extracted"
+            result = run_script("extract_materials.py", str(tmp_path), "--out", str(out_dir))
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            output_names = [p.name for p in out_dir.glob("*.md")]
+            self.assertIn("paper.md", output_names)
+            # Subdirectory file should be prefixed with subdirectory slug
+            self.assertTrue(
+                any("speech" in name for name in output_names),
+                f"Expected a file containing 'speech' in {output_names}",
+            )
+            manifest = json.loads((out_dir / "materials_manifest.json").read_text(encoding="utf-8"))
+            self.assertEqual(len(manifest["files"]), 2)
+
+    def test_extract_materials_no_recursive_skips_subdirectories(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            sub = tmp_path / "子文件夹"
+            sub.mkdir()
+            (sub / "nested.md").write_text("# Nested\n\nText\n", encoding="utf-8")
+            (tmp_path / "top.md").write_text("# Top\n\nText\n", encoding="utf-8")
+
+            out_dir = tmp_path / "extracted"
+            result = run_script("extract_materials.py", str(tmp_path), "--out", str(out_dir), "--no-recursive")
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            manifest = json.loads((out_dir / "materials_manifest.json").read_text(encoding="utf-8"))
+            self.assertEqual(len(manifest["files"]), 1)
+            self.assertEqual(manifest["files"][0]["type"], "md")
+
+    def test_skill_has_when_to_use_section(self) -> None:
+        skill_text = (SKILL / "SKILL.md").read_text(encoding="utf-8")
+
+        self.assertIn("## When to Use", skill_text)
+        self.assertIn("## When NOT to Use", skill_text)
+        self.assertIn("组会", skill_text)
+        self.assertIn("读书分享会", skill_text)
+
+    def test_skill_has_quick_reference_and_common_mistakes(self) -> None:
+        skill_text = (SKILL / "SKILL.md").read_text(encoding="utf-8")
+
+        self.assertIn("## Quick Reference", skill_text)
+        self.assertIn("## Common Mistakes", skill_text)
+        self.assertIn("extract_materials.py", skill_text)
+        self.assertIn("render_wechat_article.py", skill_text)
+        self.assertIn("check_article_json.py", skill_text)
+
+    def test_skill_date_priority_user_provided_is_highest(self) -> None:
+        ref_text = (SKILL / "references" / "material-extraction.md").read_text(encoding="utf-8")
+
+        # User-provided should appear before transcript timestamp in the priority list
+        user_pos = ref_text.find("**User-provided date**")
+        transcript_pos = ref_text.find("**Transcript timestamp**")
+        self.assertGreater(user_pos, 0, "User-provided date not found in date priority")
+        self.assertGreater(transcript_pos, 0, "Transcript timestamp not found in date priority")
+        self.assertLess(user_pos, transcript_pos, "User-provided date should rank higher than transcript timestamp")
+
+    def test_skill_description_follows_cso_convention(self) -> None:
+        skill_text = (SKILL / "SKILL.md").read_text(encoding="utf-8")
+
+        # Extract description from frontmatter
+        import re
+        match = re.search(r"^description:\s*(.+)$", skill_text, re.MULTILINE)
+        self.assertIsNotNone(match, "description field not found in frontmatter")
+        description = match.group(1).strip()
+        self.assertTrue(
+            description.lower().startswith("use when"),
+            f"description should start with 'Use when', got: {description[:60]}",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -141,9 +141,20 @@ def optional_insert_from_markdown(path: Path, text: str) -> dict[str, Any] | Non
 
 def classify_files(input_dir: Path) -> tuple[list[Path], list[Path], list[Path]]:
     markdowns = sorted(input_dir.glob("*.md"))
-    english = [p for p in markdowns if any(key in p.name.lower() for key in ("英语", "english", "speech"))]
-    papers = [p for p in markdowns if "pdf" in read_text(p)[:200].lower() or "doi" in read_text(p).lower()[:2000]]
-    transcripts = [p for p in markdowns if p not in english and p not in papers]
+    english: list[Path] = []
+    papers: list[Path] = []
+    transcripts: list[Path] = []
+    for p in markdowns:
+        name_lower = p.name.lower()
+        if any(key in name_lower for key in ("英语", "english", "speech")):
+            english.append(p)
+            continue
+        text = read_text(p)
+        head = text[:2000].lower()
+        if "doi" in head or ("摘要" in head and "abstract" in head):
+            papers.append(p)
+        else:
+            transcripts.append(p)
     return english, papers, transcripts
 
 

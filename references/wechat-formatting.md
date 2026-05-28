@@ -62,7 +62,9 @@ This makes the literature section feel like a public-facing academic reading not
 
 ## SVG Guidance
 
-Use SVG only when the user specifically wants a WeChat SVG interaction style and accepts extra testing. Keep SVG self-contained, avoid scripts, external assets, filters, and fragile IDs. Provide a non-SVG HTML card fallback.
+SVG is used by the renderer for built-in decorative elements: section marks, quote marks, speaker avatars, and cover card decorations. These are self-contained inline SVGs that survive WeChat editor import. No user action is needed for these built-in elements.
+
+For custom SVG interaction or animation, keep SVG self-contained, avoid scripts, external assets, filters, and fragile IDs. Provide a non-SVG HTML card fallback. Use only when the user specifically wants experimental SVG effects.
 
 ## Motion Guidance
 
@@ -76,8 +78,8 @@ Use a restrained academic style:
 - Accent color: one muted blue or green plus light neutral backgrounds.
 - Section headers: clear but compact.
 - Quotes/comments: left border or subtle background, not oversized decorative cards.
-- For the `zhengeryanzi` theme, keep inline SVG decorations static and restrained: section marks and closing signature. Avoid a large top brand card. Avoid animation unless explicitly requested and preview-tested.
-- Supported reading-sharing layouts are `classic`, `notebook`, `journal`, `campus`, `minimal`, `magazine`, `warm-note`, `briefing`, and `fieldnote`; supported palettes are `classic`, `forest`, `blueprint`, `warm`, `ink`, `sunrise`, and `mono`. These are inline-style variants intended to survive WeChat editor import.
+- For the `zhengeryanzi` theme, keep inline SVG decorations static and restrained: section marks, quote marks, and closing signature. Avoid animation unless explicitly requested and preview-tested.
+- Supported reading-sharing layouts are `classic`, `notebook`, `campus`, `magazine`, and `briefing`; legacy names (`journal`, `minimal`, `warm-note`, `fieldnote`) are accepted via aliases. Supported palettes are `classic`, `forest`, `blueprint`, `warm`, `ink`, `sunrise`, `mono`, `sakura`, and `ocean`. These are inline-style variants intended to survive WeChat editor import.
 
 ## Optional Insert Blocks
 

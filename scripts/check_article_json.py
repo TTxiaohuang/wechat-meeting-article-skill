@@ -16,12 +16,13 @@ LOCAL_PATH_RE = re.compile(r"(?:[A-Za-z]:\\|/mnt/[a-z]/|/Users/|/home/)")
 SUPPORTED_TEMPLATES = {
     "classic",
     "notebook",
-    "journal",
     "campus",
-    "minimal",
     "magazine",
-    "warm-note",
     "briefing",
+    # Legacy names accepted via renderer aliases
+    "journal",
+    "minimal",
+    "warm-note",
     "fieldnote",
 }
 SUPPORTED_PALETTES = {"classic", "forest", "blueprint", "warm", "ink", "sunrise", "mono", "sakura", "ocean"}

@@ -57,7 +57,7 @@ Do not silently skip any decision. If the user does not respond to a field, conf
    Use `paper_notes.json` as a table of contents, then reopen relevant excerpts. For noisy transcripts, `transcript_notes.json` may be sparse — read the full extracted transcript directly in that case.
 6. **Scan** for optional inserts (honor news, announcements, milestones). Auto-include when clear; ask when ambiguous.
 7. **Read** `references/editorial-style.md` before drafting.
-8. **Write `article.json`** directly with the file-writing tool, then immediately run the renderer to validate. To avoid JSON errors with Chinese text, replace `””` inside JSON strings with `””` or rephrase to avoid nested quotes.
+8. **Write `article.json`** directly with the file-writing tool, then immediately run the renderer to validate. To avoid JSON errors with Chinese text, replace Chinese quotation marks `””` inside JSON strings with their Unicode escapes `“”`, or rephrase to avoid nested quotes entirely.
    ```bash
    python scripts/render_wechat_article.py article.json --out dist
    ```

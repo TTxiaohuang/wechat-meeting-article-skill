@@ -407,7 +407,7 @@ def quote_block(text: str, speaker: str = "", images: list[Any] | None = None) -
         f'<p style="margin:0 0 4px;color:{ACCENT};font-size:14px;font-weight:700;line-height:1.5;">'
         f'{mark}{esc(speaker)}</p>'
         if speaker
-        else f'<p style="margin:0 0 2px;">{mark}</p>'
+        else ""
     )
     images_html = render_section_images(images or [])
     if CURRENT_TEMPLATE == "notebook":

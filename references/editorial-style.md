@@ -92,13 +92,11 @@ Template choices:
 
 - `classic`: default concise intro layout; closest to the current stable style.
 - `notebook`: reading-note style with soft section bands and a left accent rule.
-- `journal`: restrained academic note style with thin rules and compact metadata.
 - `campus`: brighter campus account style while keeping the same meeting structure.
-- `minimal`: low-decoration, high-readability style for quick meeting posts.
 - `magazine`: stronger opening rhythm and editorial section treatment.
-- `warm-note`: softer note-taking style for discussion-heavy meetings.
 - `briefing`: more report-like, with stronger section dividers and number chips.
-- `fieldnote`: light field-note style with airy double dividers and minimal boxes.
+
+Legacy names (`journal`, `minimal`, `warm-note`, `fieldnote`) are accepted via aliases and map to the closest remaining template.
 
 Palette choices:
 
@@ -109,8 +107,10 @@ Palette choices:
 - `ink`: gray-black academic tone.
 - `sunrise`: warm coral and green, suitable for friendlier campus posts.
 - `mono`: nearly monochrome minimal tone.
+- `sakura`: cherry blossom pink and warm white.
+- `ocean`: deep sea blue and light cyan.
 
-Only use SVG animation or interaction when the user explicitly asks for an experimental version, `experimental_motion` is true, and the user agrees to test it in WeChat preview. Keep all animated elements readable as static HTML/SVG.
+SVG is used by the renderer for built-in decorative elements (section marks, quote marks, avatars, cover card). No user action needed. For custom SVG animation, only use when explicitly requested and tested in WeChat preview.
 
 For the closing signature, prefer `meta.host` and `meta.editor`, rendered as "主持：..." and "推文编辑：...". Do not use a generic slogan when credit metadata is available.
 

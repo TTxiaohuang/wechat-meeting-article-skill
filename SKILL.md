@@ -36,31 +36,45 @@ Produce a publication-ready WeChat Official Account draft from weekly reading-sh
 
 Present choices to the user instead of silently applying defaults. **Ask the user directly for information; do not search the filesystem to guess folder locations.**
 
-**UI constraint**: Claude Code's question UI shows at most 4 visible options per question (the 5th slot is "Other" for custom text). When there are more than 4 choices, show the 3 most common as buttons and list all remaining options in the question description so the user can type them via "Other".
+**UI constraint**: Claude Code 的 `AskUserQuestion` 工具每个问题最多显示 4 个选项按钮。当选项超过 4 个时，**必须**把常用选项放在按钮里，把**全部选项清单**写在按钮的 `description` 中，让用户通过 "Other" 输入其余选项。
+
+**模板和配色的选项展示规则**（选项多于按钮上限时的强制格式）：
+
+**模板（5个选项，展示3个按钮）** — 使用 `AskUserQuestion`，结构如下：
+- question: "选择文章模板"
+- options（4个，其中第4个是汇总入口）:
+  1. `{label: "经典简洁", description: "classic — 默认简洁风格"}`
+  2. `{label: "笔记风格", description: "notebook — 左侧色条+柔和背景"}`
+  3. `{label: "校园清新", description: "campus — 明亮校园风格"}`
+  4. `{label: "更多模板", description: "可选: magazine(编辑排版), briefing(报告风格)。输入模板名称即可"}`
+- header: "模板"
+
+**配色（9个选项，展示3个按钮）** — 使用 `AskUserQuestion`，结构如下：
+- question: "选择配色方案"
+- options（4个，其中第4个是汇总入口）:
+  1. `{label: "森林绿", description: "forest — 学术绿+柔和米色"}`
+  2. `{label: "蓝图蓝", description: "blueprint — 蓝色报告色调"}`
+  3. `{label: "樱花粉", description: "sakura — 樱花粉+暖白"}`
+  4. `{label: "更多配色", description: "可选: classic(经典蓝), warm(暖棕绿), ink(灰黑学术), sunrise(珊瑚暖绿), mono(近单色), ocean(深海蓝)。输入配色名称即可"}`
+- header: "配色"
+
+**关键：第4个选项的 description 必须列出所有剩余选项的名称和简短说明，这样用户就知道可以通过 "Other" 输入哪些值。不要只写"更多"两个字。**
 
 ### Round 1 — before inspecting the folder:
 
 Split into separate questions (one per field), do not combine into a single block:
 
 1. **Material folder path** — ask directly
-2. **Template** — show 3 buttons + "更多模板":
-   - Buttons: `classic`(经典简洁), `notebook`(笔记风格), `campus`(校园清新)
-   - Description lists all 5: classic, notebook, campus, magazine(编辑排版), briefing(报告风格)
-   - User can pick a button or type any template name via "Other"
-3. **Palette** — show 3 buttons + "更多配色":
-   - Buttons: `forest`(森林绿), `blueprint`(蓝图蓝), `sakura`(樱花粉)
-   - Description lists all 9: classic, forest, blueprint, warm, ink, sunrise, mono, sakura, ocean
-   - User can pick a button or type any palette name via "Other"
+2. **Template** — 按上述"模板"格式提问（3个常用按钮 + "更多模板"汇总入口）
+3. **Palette** — 按上述"配色"格式提问（3个常用按钮 + "更多配色"汇总入口）
 4. **Editor** — ask for name, or confirm omission (2 options: provide name / 留空)
-5. **Brand theme** — confirm `zhengeryanzi` (2 options: 使用 / 不使用)
 
 ### Round 2 — after inventory:
 
 1. **Date/Host**: infer from materials, confirm if ambiguous
 2. **Images**: list every image file, ask user what each is and where to place it
-3. **Cover style** — 4 options:
+3. **Cover style** — 3 options:
    - `无封面` — no cover, plain title text
-   - `生成配色封面卡` — auto-generated card using palette colors (set `meta.cover_card: true`)
    - `PPT标题页` — use PPT first slide as cover image
    - `自选图片` — user provides an image path or URL
 4. **Optional inserts**: honor news, announcements, milestones — confirm inclusion
@@ -72,7 +86,7 @@ Do not silently skip any decision. If the user does not respond to a field, conf
 1. **Round 1 intake** (see Intake Gate above).
 2. **Inventory** the material folder: transcript, English speeches, paper PDFs, PPT files, images, certificates, honor-news documents.
 3. **Round 2 intake** (see Intake Gate above).
-4. **Extract** source text with `scripts/extract_materials.py`. All file types (`.docx`, `.pptx`, `.pdf`, `.txt`, `.md`) are fully extracted by default. Subdirectories are scanned recursively; use `--no-recursive` to limit to top-level files only. Do not rely on raw file reads for binary formats. Read selectively from the extracted Markdown for long files.
+4. **Extract** source text with `scripts/extract_materials.py`. All file types (`.docx`, `.doc`, `.pptx`, `.pdf`, `.txt`, `.md`, `.rtf`) are fully extracted by default. `.doc` files are auto-converted to `.docx` via Microsoft Word (pywin32) or LibreOffice; if neither is available, the script reports an error. `.rtf` files are extracted as plain text. Subdirectories are scanned recursively; use `--no-recursive` to limit to top-level files only. Do not rely on raw file reads for binary formats. Read selectively from the extracted Markdown for long files.
 5. **Prepare notes**:
    ```bash
    python scripts/prepare_article_notes.py extracted_materials --out article_notes
@@ -108,7 +122,7 @@ Do not silently skip any decision. If the user does not respond to a field, conf
 - **Images**: never assume what images are from filenames alone. Ask the user what each image is and where to place it. Use `--embed-images` for reliable browser preview and WeChat paste.
 - `source` fields are for traceability only; never display filenames or paths in the article body.
 - `custom_sections` for occasional inserts (honor news, announcements, milestones). Do not turn the article into a separate news piece.
-- Default theme `zhengeryanzi`. See `references/editorial-style.md` for template and palette options.
+- Default theme `zhengeryanzi`（公众号名称：郑而研资）。**品牌主题是默认设置，无需询问用户是否使用。** See `references/editorial-style.md` for template and palette options.
 
 ## Dependency Setup
 
@@ -117,6 +131,10 @@ Renderer needs only Python 3 stdlib. Material extraction needs optional parsers:
 ```bash
 python -m pip install python-docx python-pptx pdfplumber pypdf
 ```
+
+For `.doc` files (old Word format), auto-conversion requires one of:
+- **Microsoft Word + pywin32**: `python -m pip install pywin32`（Windows，需已安装 Word）
+- **LibreOffice**: add `libreoffice` / `soffice` to PATH（跨平台）
 
 On Windows, set `PYTHONIOENCODING=utf-8` if Chinese text becomes garbled.
 

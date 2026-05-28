@@ -40,10 +40,11 @@ Alternative workflow:
 Default to horizontal scrolling HTML cards:
 
 - Container: `overflow-x:auto; white-space:nowrap;`
-- Card: `display:inline-block; vertical-align:top; width:86%; max-width:340px; white-space:normal;`
+- Card: `display:inline-block; vertical-align:top; width:92%; max-width:340px; white-space:normal;`
 - One speaker per card.
 - If source speech drafts are provided, keep the full original English text in the card body.
 - Add a short "左右滑动查看完整英文发言" hint before the cards.
+- Speaker avatars are 36px circular, small and unobtrusive.
 
 ## Literature Blocks
 
@@ -62,7 +63,7 @@ This makes the literature section feel like a public-facing academic reading not
 
 ## SVG Guidance
 
-SVG is used by the renderer for built-in decorative elements: section marks, quote marks, speaker avatars, and cover card decorations. These are self-contained inline SVGs that survive WeChat editor import. No user action is needed for these built-in elements.
+SVG is used by the renderer for built-in decorative elements: section marks, quote marks, and speaker avatars. These are self-contained inline SVGs that survive WeChat editor import. No user action is needed for these built-in elements.
 
 For custom SVG interaction or animation, keep SVG self-contained, avoid scripts, external assets, filters, and fragile IDs. Provide a non-SVG HTML card fallback. Use only when the user specifically wants experimental SVG effects.
 

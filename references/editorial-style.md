@@ -86,7 +86,7 @@ Never assume what images are based on filenames alone. Never silently skip image
 
 ## Brand Theme
 
-Use `"theme": "zhengeryanzi"` for the default account style. The renderer adds small inline SVG section marks and a closing signature. Do not add a large top brand card by default. Keep decorations static because WeChat editor compatibility is more predictable than animated SVG interactions.
+Use `"theme": "zhengeryanzi"` for the default account style（公众号名称：郑而研资）。The renderer adds small inline SVG section marks and a closing signature. **品牌主题是默认设置，无需询问用户是否使用。** Do not add a large top brand card by default. Keep decorations static because WeChat editor compatibility is more predictable than animated SVG interactions.
 
 Template choices:
 
@@ -110,13 +110,13 @@ Palette choices:
 - `sakura`: cherry blossom pink and warm white.
 - `ocean`: deep sea blue and light cyan.
 
-SVG is used by the renderer for built-in decorative elements (section marks, quote marks, avatars, cover card). No user action needed. For custom SVG animation, only use when explicitly requested and tested in WeChat preview.
+SVG is used by the renderer for built-in decorative elements (section marks, quote marks, avatars). No user action needed. For custom SVG animation, only use when explicitly requested and tested in WeChat preview.
 
 For the closing signature, prefer `meta.host` and `meta.editor`, rendered as "主持：..." and "推文编辑：...". Do not use a generic slogan when credit metadata is available.
 
 Useful image placement suggestions:
 
-- cover: meeting title slide, meeting photo, or a clean generated cover
+- 微信公众号封面（在微信编辑器中设置）: meeting title slide, meeting photo, or a clean generated cover
 - English exchange: optional topic card
 - literature sharing: supplied paper framework figure, PPT key slide, or method flow diagram
 - discussion summary: meeting photo or reading list image

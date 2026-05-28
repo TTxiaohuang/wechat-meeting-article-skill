@@ -627,11 +627,11 @@ def generate_avatar_svg(speaker: str, card_index: int) -> str:
     letter = (speaker.strip()[0] if speaker.strip() else "?").upper()
     color = AVATAR_COLORS[(card_index - 1) % len(AVATAR_COLORS)]
     svg = (
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">'
-        f'<circle cx="24" cy="24" r="24" fill="{color}"/>'
-        f'<text x="24" y="24" text-anchor="middle" dominant-baseline="central"'
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36">'
+        f'<circle cx="18" cy="18" r="18" fill="{color}"/>'
+        f'<text x="18" y="18" text-anchor="middle" dominant-baseline="central"'
         f' font-family="-apple-system,BlinkMacSystemFont,sans-serif"'
-        f' font-size="22" font-weight="700" fill="#ffffff">{letter}</text>'
+        f' font-size="16" font-weight="700" fill="#ffffff">{letter}</text>'
         f'</svg>'
     )
     return f"data:image/svg+xml;base64,{base64.b64encode(svg.encode()).decode()}"
@@ -659,20 +659,20 @@ def render_english(data: dict[str, Any], index: int, branded: bool = False) -> s
             resolved_photo, is_ph = resolve_image_src(photo)
             if not is_ph:
                 photo_html = (
-                    f'<section style="width:48px;height:48px;border-radius:50%;'
+                    f'<section style="width:36px;height:36px;border-radius:50%;'
                     f'background-image:url({esc(resolved_photo)});'
                     f'background-size:cover;background-position:center;'
                     f'margin-bottom:8px;"></section>'
                 )
             else:
                 photo_html = (
-                    f'<section style="width:48px;height:48px;border-radius:50%;'
+                    f'<section style="width:36px;height:36px;border-radius:50%;'
                     f'background-image:url({generate_avatar_svg(speaker, card_index)});'
                     f'background-size:cover;margin-bottom:8px;"></section>'
                 )
         else:
             photo_html = (
-                f'<section style="width:48px;height:48px;border-radius:50%;'
+                f'<section style="width:36px;height:36px;border-radius:50%;'
                 f'background-image:url({generate_avatar_svg(speaker, card_index)});'
                 f'background-size:cover;margin-bottom:8px;"></section>'
             )
@@ -781,39 +781,6 @@ def render_free_discussion(data: dict[str, Any], index: int, branded: bool = Fal
     return "".join(parts)
 
 
-def render_cover_card(meta: dict[str, Any]) -> str:
-    """Generate a styled cover card using palette colors."""
-    title = meta.get("title") or "组会纪要"
-    date = meta.get("date") or ""
-    group = meta.get("group") or ""
-    host = meta.get("host") or ""
-    # Decorative SVG pattern for the card
-    deco = (
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="120" height="60" viewBox="0 0 120 60" '
-        f'fill="none" style="position:absolute;top:12px;right:12px;opacity:0.15;">'
-        f'<circle cx="20" cy="20" r="18" stroke="#ffffff" stroke-width="2"/>'
-        f'<circle cx="55" cy="35" r="12" stroke="#ffffff" stroke-width="1.5"/>'
-        f'<circle cx="90" cy="15" r="8" stroke="#ffffff" stroke-width="1"/>'
-        f'</svg>'
-    )
-    host_line = f"主持：{host}" if host else ""
-    meta_parts = [p for p in [date, group, host_line] if p]
-    meta_text = " ｜ ".join(meta_parts)
-    return (
-        f'<section style="margin:0 0 16px;border-radius:10px;overflow:hidden;'
-        f'border:1px solid {BORDER};">'
-        f'<section style="position:relative;padding:28px 20px 20px;background:{ACCENT};">'
-        f'{deco}'
-        f'<h1 style="margin:0;color:#ffffff;font-size:22px;line-height:1.4;font-weight:800;">'
-        f'{esc(title)}</h1>'
-        f'</section>'
-        f'<section style="padding:14px 20px;background:{WARM};">'
-        f'<p style="margin:0;color:{TEXT};font-size:13px;line-height:1.6;">{esc(meta_text)}</p>'
-        f'</section>'
-        f'</section>'
-    )
-
-
 def render_article(article: dict[str, Any]) -> str:
     template_name, palette_name = apply_visual_style(article)
     meta = article.get("meta") or {}
@@ -823,16 +790,13 @@ def render_article(article: dict[str, Any]) -> str:
         f'<section data-template="{esc(template_name)}" data-palette="{esc(palette_name)}" '
         f'style="margin:0;padding:0;">'
     ]
-    if meta.get("cover_card"):
-        parts.append(render_cover_card(meta))
-    else:
-        parts.extend([
-            f'<h1 style="margin:0 0 10px;color:{TEXT};font-size:23px;line-height:1.35;font-weight:800;">'
-            f'{esc(meta.get("title") or "组会纪要")}</h1>',
-            f'<p style="margin:0 0 12px;color:{MUTED};font-size:13px;line-height:1.6;">'
-            f'{esc(meta.get("date") or "")} {esc(meta.get("group") or "")} '
-            f'{esc(meta.get("host") and "主持：" + meta.get("host"))}</p>',
-        ])
+    parts.extend([
+        f'<h1 style="margin:0 0 10px;color:{TEXT};font-size:23px;line-height:1.35;font-weight:800;">'
+        f'{esc(meta.get("title") or "组会纪要")}</h1>',
+        f'<p style="margin:0 0 12px;color:{MUTED};font-size:13px;line-height:1.6;">'
+        f'{esc(meta.get("date") or "")} {esc(meta.get("group") or "")} '
+        f'{esc(meta.get("host") and "主持：" + meta.get("host"))}</p>',
+    ])
     cover = meta.get("cover_image") or ""
     if cover:
         parts.append(render_image({"url": cover, "caption": meta.get("cover_caption") or ""}))

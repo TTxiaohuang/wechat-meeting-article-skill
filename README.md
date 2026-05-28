@@ -240,7 +240,7 @@ python scripts/check_article_json.py article.json --html dist/article.wechat.htm
 
 - **公众号标题**：来自 `article.json` 的 `meta.title`
 - **摘要**：基于 `meta.summary` 的一句话概括
-- **封面图**：用会议照片、PPT 标题页、或自动生成的封面卡
+- **封面图**（在微信编辑器中设置）：用会议照片、PPT 标题页等
 
 ## 模板和配色
 

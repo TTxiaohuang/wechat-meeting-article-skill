@@ -17,6 +17,9 @@ Missing optional document parser dependencies.
 Install them in the active Python environment:
   python -m pip install python-docx python-pptx pdfplumber pypdf
 
+For .doc files (old Word format), the script auto-converts to .docx when possible.
+Requires either Microsoft Word (via pywin32) or LibreOffice on PATH.
+
 On Windows, if Chinese output is garbled, run:
   $env:PYTHONIOENCODING="utf-8"
 """
@@ -44,6 +47,73 @@ def read_text_file(path: Path) -> str:
         except UnicodeDecodeError:
             continue
     return data.decode("utf-8", errors="replace")
+
+
+def convert_doc_to_docx(doc_path: Path) -> Path:
+    """Convert a .doc file to .docx. Returns the path to the temporary .docx file."""
+    import shutil
+    import subprocess
+    import tempfile
+
+    tmp_dir = Path(tempfile.mkdtemp(prefix="doc_convert_"))
+    docx_path = tmp_dir / (doc_path.stem + ".docx")
+
+    # Try Word COM automation (Windows + pywin32)
+    try:
+        import win32com.client  # type: ignore[import-untyped]
+        word = win32com.client.Dispatch("Word.Application")
+        word.Visible = False
+        try:
+            doc = word.Documents.Open(str(doc_path.resolve()))
+            doc.SaveAs2(str(docx_path.resolve()), FileFormat=16)  # 16 = docx
+            doc.Close()
+        finally:
+            word.Quit()
+        return docx_path
+    except Exception:
+        pass
+
+    # Try LibreOffice headless
+    lo_cmd = shutil.which("libreoffice") or shutil.which("soffice")
+    if lo_cmd:
+        try:
+            subprocess.run(
+                [lo_cmd, "--headless", "--convert-to", "docx", "--outdir", str(tmp_dir), str(doc_path.resolve())],
+                check=True, capture_output=True, timeout=60,
+            )
+            if docx_path.is_file():
+                return docx_path
+        except Exception:
+            pass
+
+    raise RuntimeError(
+        f"Cannot convert .doc file: {doc_path.name}. "
+        "Install Microsoft Word + pywin32, or install LibreOffice and add it to PATH. "
+        "Alternatively, manually save the file as .docx first."
+    )
+
+
+def extract_rtf(path: Path) -> str:
+    """Extract plain text from an RTF file by stripping control codes."""
+    raw = read_text_file(path)
+    # Remove header up to first \deflang or \ansi or first group content
+    text = raw
+    # Strip {\*\...} destination groups
+    text = re.sub(r'\{\\\*[^{}]*\}', '', text)
+    # Strip control words (e.g. \rtf1, \ansi, \fonttbl, \colortbl, \stylesheet)
+    text = re.sub(r'\\[a-zA-Z]+\d* ?(?=\{|\}|\\)', '', text)
+    # Strip escaped characters like \'xx
+    text = re.sub(r"\\'[0-9a-fA-F]{2}", '', text)
+    # Strip remaining backslash commands like \\, \{, \}
+    text = re.sub(r'\\[{}\\]', '', text)
+    # Remove braces
+    text = text.replace('{', '').replace('}', '')
+    # Collapse whitespace
+    text = re.sub(r'[ \t]+', ' ', text)
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    # Convert RTF unicode escapes \uN? to approximate char
+    text = re.sub(r'\\u(\-?\d+)\??', lambda m: chr(int(m.group(1)) % 65536), text)
+    return text.strip()
 
 
 def extract_docx(path: Path) -> str:
@@ -158,11 +228,16 @@ def extract_one(path: Path, pdf_pages: int | None) -> tuple[str, str, dict[str, 
     suffix = path.suffix.lower()
     if suffix == ".docx":
         return "docx", extract_docx(path), {}
+    if suffix == ".doc":
+        docx_path = convert_doc_to_docx(path)
+        return "doc", extract_docx(docx_path), {"converted_from": ".doc"}
     if suffix == ".pptx":
         return "pptx", extract_pptx(path), {}
     if suffix == ".pdf":
         text, metadata = extract_pdf(path, pdf_pages)
         return "pdf", text, metadata
+    if suffix == ".rtf":
+        return "rtf", extract_rtf(path), {}
     if suffix in {".txt", ".md"}:
         return suffix.lstrip("."), read_text_file(path), {}
     raise ValueError(f"unsupported file type: {suffix}")
@@ -182,7 +257,7 @@ def main() -> int:
     out_dir = args.out.resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    supported = {".docx", ".pptx", ".pdf", ".txt", ".md"}
+    supported = {".docx", ".doc", ".pptx", ".pdf", ".txt", ".md", ".rtf"}
     if args.no_recursive:
         files = [p for p in sorted(input_dir.iterdir()) if p.is_file() and p.suffix.lower() in supported]
     else:

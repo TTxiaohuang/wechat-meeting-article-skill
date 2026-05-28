@@ -13,21 +13,34 @@ Produce a publication-ready WeChat Official Account draft from weekly reading-sh
 
 Present choices to the user instead of silently applying defaults. **Ask the user directly for information; do not search the filesystem to guess folder locations.**
 
+**UI constraint**: Claude Code's question UI shows at most 4 visible options per question (the 5th slot is "Other" for custom text). When there are more than 4 choices, show the 3 most common as buttons and list all remaining options in the question description so the user can type them via "Other".
+
 ### Round 1 — before inspecting the folder:
 
-Ask in a single question block:
-- **Material folder path**
-- **Template** (5 options): `classic`(经典简洁), `notebook`(读书笔记), `campus`(校园清新), `magazine`(编辑排版), `briefing`(报告风格)
-- **Palette** (9 options): `classic`(蓝灰暖色), `forest`(森林绿), `blueprint`(蓝图蓝), `warm`(暖棕绿), `ink`(水墨灰黑), `sunrise`(日出珊瑚), `mono`(近单色), `sakura`(樱花粉), `ocean`(深海蓝)
-- **Editor**: name, or confirm omission
-- **Brand theme**: confirm `zhengeryanzi` (SVG section marks + closing signature)
+Split into separate questions (one per field), do not combine into a single block:
+
+1. **Material folder path** — ask directly
+2. **Template** — show 3 buttons + "更多模板":
+   - Buttons: `classic`(经典简洁), `notebook`(笔记风格), `campus`(校园清新)
+   - Description lists all 5: classic, notebook, campus, magazine(编辑排版), briefing(报告风格)
+   - User can pick a button or type any template name via "Other"
+3. **Palette** — show 3 buttons + "更多配色":
+   - Buttons: `forest`(森林绿), `blueprint`(蓝图蓝), `sakura`(樱花粉)
+   - Description lists all 9: classic, forest, blueprint, warm, ink, sunrise, mono, sakura, ocean
+   - User can pick a button or type any palette name via "Other"
+4. **Editor** — ask for name, or confirm omission (2 options: provide name / 留空)
+5. **Brand theme** — confirm `zhengeryanzi` (2 options: 使用 / 不使用)
 
 ### Round 2 — after inventory:
 
-- **Date/Host**: infer from materials, confirm if ambiguous
-- **Images**: list every image file, ask user what each is and where to place it
-- **Cover**: supplied image, PPT title slide, or omit
-- **Optional inserts**: honor news, announcements, milestones — confirm inclusion
+1. **Date/Host**: infer from materials, confirm if ambiguous
+2. **Images**: list every image file, ask user what each is and where to place it
+3. **Cover style** — 4 options:
+   - `无封面` — no cover, plain title text
+   - `生成配色封面卡` — auto-generated card using palette colors (set `meta.cover_card: true`)
+   - `PPT标题页` — use PPT first slide as cover image
+   - `自选图片` — user provides an image path or URL
+4. **Optional inserts**: honor news, announcements, milestones — confirm inclusion
 
 Do not silently skip any decision. If the user does not respond to a field, confirm the default.
 

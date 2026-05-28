@@ -642,10 +642,10 @@ def generate_avatar_svg(speaker: str, card_index: int) -> str:
         f'<circle cx="24" cy="24" r="24" fill="{color}"/>'
         f'<text x="24" y="24" text-anchor="middle" dominant-baseline="central"'
         f' font-family="-apple-system,BlinkMacSystemFont,sans-serif"'
-        f' font-size="22" font-weight="700" fill="#ffffff">{esc(letter)}</text>'
+        f' font-size="22" font-weight="700" fill="#ffffff">{letter}</text>'
         f'</svg>'
     )
-    return f"data:image/svg+xml,{svg}"
+    return f"data:image/svg+xml;base64,{base64.b64encode(svg.encode()).decode()}"
 
 
 def render_english(data: dict[str, Any], index: int, branded: bool = False) -> str:

@@ -381,11 +381,33 @@ def info_card(title: str, text: str) -> str:
     )
 
 
+def quote_mark_svg(size: int = 18) -> str:
+    """Generate a template-appropriate SVG quote mark."""
+    if CURRENT_TEMPLATE == "notebook":
+        # Corner bracket 「
+        svg = f'<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}" viewBox="0 0 24 24" fill="none"><path d="M4 4v8h8M4 4h8v8" stroke="{ACCENT}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/></svg>'
+    elif CURRENT_TEMPLATE == "campus":
+        # Circle dot
+        svg = f'<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}" viewBox="0 0 24 24" fill="none"><circle cx="8" cy="8" r="5" fill="{ACCENT}" opacity="0.35"/><circle cx="16" cy="14" r="4" fill="{ACCENT}" opacity="0.2"/></svg>'
+    elif CURRENT_TEMPLATE == "magazine":
+        # Large stylized "
+        svg = f'<svg xmlns="http://www.w3.org/2000/svg" width="{size+4}" height="{size+4}" viewBox="0 0 28 28" fill="none"><path d="M6 8c0-3 2-6 6-6v4c-2 0-2 2-2 4h2v6H6V8zm10 0c0-3 2-6 6-6v4c-2 0-2 2-2 4h2v6H16V8z" fill="{ACCENT}" opacity="0.25"/></svg>'
+    elif CURRENT_TEMPLATE == "briefing":
+        # Square bracket with line
+        svg = f'<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}" viewBox="0 0 24 24" fill="none"><path d="M6 3v18M6 3h5M6 21h5" stroke="{ACCENT}" stroke-width="2" stroke-linecap="round" opacity="0.4"/></svg>'
+    else:
+        # classic: accent dot
+        svg = f'<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="6" fill="{ACCENT}" opacity="0.2"/></svg>'
+    return f'<span style="display:inline-block;margin-right:6px;vertical-align:-2px;">{svg}</span>'
+
+
 def quote_block(text: str, speaker: str = "", images: list[Any] | None = None) -> str:
+    mark = quote_mark_svg()
     label_html = (
-        f'<p style="margin:0 0 4px;color:{ACCENT};font-size:14px;font-weight:700;line-height:1.5;">{esc(speaker)}</p>'
+        f'<p style="margin:0 0 4px;color:{ACCENT};font-size:14px;font-weight:700;line-height:1.5;">'
+        f'{mark}{esc(speaker)}</p>'
         if speaker
-        else ""
+        else f'<p style="margin:0 0 2px;">{mark}</p>'
     )
     images_html = render_section_images(images or [])
     if CURRENT_TEMPLATE == "notebook":
@@ -600,6 +622,32 @@ def render_custom_sections(article: dict[str, Any], placement: str) -> str:
     return "".join(rendered)
 
 
+AVATAR_COLORS = [
+    "#4a90d9",  # blue
+    "#5ba55b",  # green
+    "#c46b8a",  # pink
+    "#d4a04a",  # gold
+    "#7a6bb5",  # purple
+    "#5a9e9e",  # teal
+    "#c47a4a",  # orange
+]
+
+
+def generate_avatar_svg(speaker: str, card_index: int) -> str:
+    """Generate an SVG data-uri avatar with the speaker's initial letter."""
+    letter = (speaker.strip()[0] if speaker.strip() else "?").upper()
+    color = AVATAR_COLORS[(card_index - 1) % len(AVATAR_COLORS)]
+    svg = (
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">'
+        f'<circle cx="24" cy="24" r="24" fill="{color}"/>'
+        f'<text x="24" y="24" text-anchor="middle" dominant-baseline="central"'
+        f' font-family="-apple-system,BlinkMacSystemFont,sans-serif"'
+        f' font-size="22" font-weight="700" fill="#ffffff">{esc(letter)}</text>'
+        f'</svg>'
+    )
+    return f"data:image/svg+xml,{svg}"
+
+
 def render_english(data: dict[str, Any], index: int, branded: bool = False) -> str:
     speeches = data.get("speeches") or []
     parts = [h2(data.get("title") or "英语交流", index, branded)]
@@ -629,10 +677,16 @@ def render_english(data: dict[str, Any], index: int, branded: bool = False) -> s
                 )
             else:
                 photo_html = (
-                    f'<section style="width:48px;height:48px;border-radius:50%;background:{SOFT};'
-                    f'border:1.5px dashed {BORDER};margin-bottom:8px;'
-                    f'font-size:10px;color:{MUTED};text-align:center;line-height:48px;">IMG</section>'
+                    f'<section style="width:48px;height:48px;border-radius:50%;'
+                    f'background-image:url({generate_avatar_svg(speaker, card_index)});'
+                    f'background-size:cover;margin-bottom:8px;"></section>'
                 )
+        else:
+            photo_html = (
+                f'<section style="width:48px;height:48px;border-radius:50%;'
+                f'background-image:url({generate_avatar_svg(speaker, card_index)});'
+                f'background-size:cover;margin-bottom:8px;"></section>'
+            )
         cards.append(
             f'<section style="box-sizing:border-box;display:inline-block;vertical-align:top;width:92%;'
             f'max-width:340px;min-height:220px;margin:8px 12px 8px 0;padding:16px 16px 14px;white-space:normal;'
@@ -738,6 +792,39 @@ def render_free_discussion(data: dict[str, Any], index: int, branded: bool = Fal
     return "".join(parts)
 
 
+def render_cover_card(meta: dict[str, Any]) -> str:
+    """Generate a styled cover card using palette colors."""
+    title = meta.get("title") or "组会纪要"
+    date = meta.get("date") or ""
+    group = meta.get("group") or ""
+    host = meta.get("host") or ""
+    # Decorative SVG pattern for the card
+    deco = (
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="120" height="60" viewBox="0 0 120 60" '
+        f'fill="none" style="position:absolute;top:12px;right:12px;opacity:0.15;">'
+        f'<circle cx="20" cy="20" r="18" stroke="#ffffff" stroke-width="2"/>'
+        f'<circle cx="55" cy="35" r="12" stroke="#ffffff" stroke-width="1.5"/>'
+        f'<circle cx="90" cy="15" r="8" stroke="#ffffff" stroke-width="1"/>'
+        f'</svg>'
+    )
+    host_line = f"主持：{host}" if host else ""
+    meta_parts = [p for p in [date, group, host_line] if p]
+    meta_text = " ｜ ".join(meta_parts)
+    return (
+        f'<section style="margin:0 0 16px;border-radius:10px;overflow:hidden;'
+        f'border:1px solid {BORDER};">'
+        f'<section style="position:relative;padding:28px 20px 20px;background:{ACCENT};">'
+        f'{deco}'
+        f'<h1 style="margin:0;color:#ffffff;font-size:22px;line-height:1.4;font-weight:800;">'
+        f'{esc(title)}</h1>'
+        f'</section>'
+        f'<section style="padding:14px 20px;background:{WARM};">'
+        f'<p style="margin:0;color:{TEXT};font-size:13px;line-height:1.6;">{esc(meta_text)}</p>'
+        f'</section>'
+        f'</section>'
+    )
+
+
 def render_article(article: dict[str, Any]) -> str:
     template_name, palette_name = apply_visual_style(article)
     meta = article.get("meta") or {}
@@ -747,13 +834,16 @@ def render_article(article: dict[str, Any]) -> str:
         f'<section data-template="{esc(template_name)}" data-palette="{esc(palette_name)}" '
         f'style="margin:0;padding:0;">'
     ]
-    parts.extend([
-        f'<h1 style="margin:0 0 10px;color:{TEXT};font-size:23px;line-height:1.35;font-weight:800;">'
-        f'{esc(meta.get("title") or "组会纪要")}</h1>',
-        f'<p style="margin:0 0 12px;color:{MUTED};font-size:13px;line-height:1.6;">'
-        f'{esc(meta.get("date") or "")} {esc(meta.get("group") or "")} '
-        f'{esc(meta.get("host") and "主持：" + meta.get("host"))}</p>',
-    ])
+    if meta.get("cover_card"):
+        parts.append(render_cover_card(meta))
+    else:
+        parts.extend([
+            f'<h1 style="margin:0 0 10px;color:{TEXT};font-size:23px;line-height:1.35;font-weight:800;">'
+            f'{esc(meta.get("title") or "组会纪要")}</h1>',
+            f'<p style="margin:0 0 12px;color:{MUTED};font-size:13px;line-height:1.6;">'
+            f'{esc(meta.get("date") or "")} {esc(meta.get("group") or "")} '
+            f'{esc(meta.get("host") and "主持：" + meta.get("host"))}</p>',
+        ])
     cover = meta.get("cover_image") or ""
     if cover:
         parts.append(render_image({"url": cover, "caption": meta.get("cover_caption") or ""}))

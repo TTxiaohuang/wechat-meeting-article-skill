@@ -15,7 +15,7 @@ The script writes:
 
 Output filenames are sanitized for agent and shell compatibility. Quote-like characters, path separators, and other fragile punctuation are replaced with underscores. The original source path is preserved in `materials_manifest.json`.
 
-For PDFs, the default is full-document extraction. This keeps the evidence complete for literature sharing. To limit very long files, pass a positive page count:
+All supported file types (`.docx`, `.pptx`, `.pdf`, `.txt`, `.md`) are extracted in full by default. For PDFs, the manifest additionally records page counts. To limit PDF extraction to a specific number of pages:
 
 ```bash
 python scripts/extract_materials.py path/to/material-folder --out extracted_materials --pdf-pages 10

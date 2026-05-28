@@ -4,8 +4,10 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import html
 import json
+import mimetypes
 import sys
 from pathlib import Path
 from typing import Any
@@ -24,6 +26,8 @@ BRAND_GOLD = "#b58a3a"
 CURRENT_TEMPLATE = "classic"
 CURRENT_PALETTE = "classic"
 CURRENT_MOTION = False
+EMBED_IMAGES = False
+JSON_DIR: Path | None = None
 
 PALETTES: dict[str, dict[str, str]] = {
     "classic": {
@@ -369,6 +373,39 @@ def quote_block(text: str, speaker: str = "") -> str:
     )
 
 
+def resolve_image_src(src: str) -> tuple[str, bool]:
+    """Resolve image src for HTML output.
+
+    Returns (resolved_src, is_placeholder).
+    - Remote URLs pass through.
+    - Local files: embed as data-uri if EMBED_IMAGES, else return placeholder marker.
+    """
+    if not src or src.startswith(("http://", "https://", "data:")):
+        return src, False
+    # Try to resolve relative path against JSON directory
+    candidate = Path(src)
+    if not candidate.is_absolute() and JSON_DIR:
+        candidate = JSON_DIR / src
+    if candidate.is_file():
+        if EMBED_IMAGES:
+            mime = mimetypes.guess_type(str(candidate))[0] or "image/jpeg"
+            data = base64.b64encode(candidate.read_bytes()).decode()
+            return f"data:{mime};base64,{data}", False
+        return src, False
+    # File not found — show placeholder
+    return src, True
+
+
+def image_placeholder(src: str) -> str:
+    return (
+        f'<section style="margin:14px 0;padding:18px 14px;border:1.5px dashed {BORDER};'
+        f"border-radius:8px;text-align:center;\">"
+        f'<p style="margin:0;color:{MUTED};font-size:13px;line-height:1.6;">'
+        f"[ 图片占位 ] {esc(src)} — 请在微信编辑器中手动插入</p>"
+        "</section>"
+    )
+
+
 def render_image(image: dict[str, Any] | str) -> str:
     if isinstance(image, str):
         src = image
@@ -380,9 +417,12 @@ def render_image(image: dict[str, Any] | str) -> str:
         alt = image.get("alt") or caption
     if not src:
         return ""
+    resolved, is_placeholder = resolve_image_src(src)
+    if is_placeholder:
+        return image_placeholder(src)
     return (
         '<section style="margin:14px 0;text-align:center;">'
-        f'<img src="{esc(src)}" alt="{esc(alt)}" style="display:block;width:100%;max-width:100%;'
+        f'<img src="{esc(resolved)}" alt="{esc(alt)}" style="display:block;width:100%;max-width:100%;'
         'height:auto;border-radius:8px;border:0;" />'
         f'{f"<p style=\'margin:6px 0 0;color:{MUTED};font-size:12px;line-height:1.5;text-align:center;\'>{esc(caption)}</p>" if caption else ""}'
         "</section>"
@@ -566,11 +606,27 @@ def render_english(data: dict[str, Any], index: int, branded: bool = False) -> s
     for card_index, item in enumerate(speeches, start=1):
         speaker = item.get("speaker") or "Speaker"
         role = item.get("role") or ""
+        photo = item.get("photo") or ""
+        photo_html = ""
+        if photo:
+            resolved_photo, is_ph = resolve_image_src(photo)
+            if not is_ph:
+                photo_html = (
+                    f'<img src="{esc(resolved_photo)}" '
+                    f'style="width:48px;height:48px;border-radius:50%;object-fit:cover;margin-bottom:8px;" />'
+                )
+            else:
+                photo_html = (
+                    f'<section style="width:48px;height:48px;border-radius:50%;background:{SOFT};'
+                    f'border:1.5px dashed {BORDER};margin-bottom:8px;display:flex;align-items:center;'
+                    f'justify-content:center;font-size:10px;color:{MUTED};">IMG</section>'
+                )
         cards.append(
             f'<section style="box-sizing:border-box;display:inline-block;vertical-align:top;width:92%;'
             f'max-width:340px;min-height:220px;margin:8px 12px 8px 0;padding:16px 16px 14px;white-space:normal;'
             f'border:1px solid {BORDER};border-radius:8px;background:#ffffff;">'
             f'<p style="margin:0;color:{MUTED};font-size:12px;line-height:1.4;text-align:right;">{card_index}/{total}</p>'
+            f'{photo_html}'
             f'<p style="margin:0;color:{ACCENT};font-size:18px;font-weight:800;line-height:1.4;">{esc(speaker)}</p>'
             f'<p style="margin:2px 0 10px;color:{MUTED};font-size:13px;line-height:1.5;">{esc(role)}</p>'
             f'{paragraphs(item.get("text") or "", size=14, margin_top=0)}'
@@ -711,11 +767,17 @@ def render_article(article: dict[str, Any]) -> str:
 
 
 def main() -> None:
+    global EMBED_IMAGES, JSON_DIR
     configure_stdio()
     parser = argparse.ArgumentParser()
     parser.add_argument("article_json", type=Path)
     parser.add_argument("--out", type=Path, default=Path("dist"))
+    parser.add_argument("--embed-images", action="store_true",
+                        help="Embed local images as base64 data-uri in HTML output")
     args = parser.parse_args()
+
+    EMBED_IMAGES = args.embed_images
+    JSON_DIR = args.article_json.resolve().parent
 
     try:
         raw_json = args.article_json.read_text(encoding="utf-8-sig")

@@ -36,7 +36,7 @@ Do not silently skip any decision. If the user does not respond to a field, conf
 1. **Round 1 intake** (see Intake Gate above).
 2. **Inventory** the material folder: transcript, English speeches, paper PDFs, PPT files, images, certificates, honor-news documents.
 3. **Round 2 intake** (see Intake Gate above).
-4. **Extract** source text with `scripts/extract_materials.py`. For `.docx`, `.pptx`, `.pdf` do not rely on raw file reads. PDFs are extracted in full by default; read selectively from the extracted Markdown.
+4. **Extract** source text with `scripts/extract_materials.py`. All file types (`.docx`, `.pptx`, `.pdf`, `.txt`, `.md`) are fully extracted by default. Do not rely on raw file reads for binary formats. Read selectively from the extracted Markdown for long files.
 5. **Prepare notes**:
    ```bash
    python scripts/prepare_article_notes.py extracted_materials --out article_notes
@@ -44,11 +44,16 @@ Do not silently skip any decision. If the user does not respond to a field, conf
    Use `paper_notes.json` as a table of contents, then reopen relevant excerpts. For noisy transcripts, `transcript_notes.json` may be sparse — read the full extracted transcript directly in that case.
 6. **Scan** for optional inserts (honor news, announcements, milestones). Auto-include when clear; ask when ambiguous.
 7. **Read** `references/editorial-style.md` before drafting.
-8. **Write `article.json`** directly with the file-writing tool, then immediately run the renderer to validate. To avoid JSON errors with Chinese text, replace `""` inside JSON strings with `“”` or rephrase to avoid nested quotes.
+8. **Write `article.json`** directly with the file-writing tool, then immediately run the renderer to validate. To avoid JSON errors with Chinese text, replace `””` inside JSON strings with `””` or rephrase to avoid nested quotes.
    ```bash
    python scripts/render_wechat_article.py article.json --out dist
    ```
    If JSON parse fails, fix the quotes and re-render. Alternative: use `scripts/write_article_json.py article_data.py --out article.json` when UTF-8 Python files are reliable.
+   To embed local images as base64 data-uri (so they display in browser preview and auto-upload to WeChat when pasted), add `--embed-images`:
+   ```bash
+   python scripts/render_wechat_article.py article.json --out dist --embed-images
+   ```
+   Without `--embed-images`, local image paths must be resolvable from the HTML file; otherwise a placeholder is shown.
 9. **Check** quality:
    ```bash
    python scripts/check_article_json.py article.json --html dist/article.wechat.html
@@ -61,7 +66,7 @@ Do not silently skip any decision. If the user does not respond to a field, conf
 
 - Mobile reading: short paragraphs, clear headings, readable line spacing.
 - Meeting flow: lead summary → English exchange → literature sharing → [policy discussion if present] → free discussion → closing. Omit sections without source material.
-- **English cards**: one speaker per card, full original text by default.
+- **English cards**: one speaker per card, full original text by default. Use `photo` field for speaker portraits (displayed as small circular avatars).
 - **Literature**: distinguish paper facts from meeting comments. Expand into background, research question, methods, findings, discussion value. Mark incomplete metadata for confirmation.
 - **Transcripts**: treat as noisy evidence. Cross-check names, dates, paper titles, and technical terms against PPT/PDF/filenames. For ASR speaker identification, use these strategies:
   - PPT's `分享人` → likely `发言人1` (the moderator)
@@ -70,7 +75,7 @@ Do not silently skip any decision. If the user does not respond to a field, conf
   - Teachers: longer evaluative comments, assign tasks. Students: ask questions, discuss assignments
   - When uncertain: use "同学"/"老师" instead of guessing names
 - **Date inference priority**: transcript timestamp > user-provided > PPT metadata > filename date > file modification date. Ask to confirm when sources conflict.
-- **Images**: never assume what images are from filenames alone. Ask the user what each image is and where to place it. If no usable images, include placement suggestions in the final response.
+- **Images**: never assume what images are from filenames alone. Ask the user what each image is and where to place it. If no usable images, include placement suggestions in the final response. Use `--embed-images` to embed local images as base64 in HTML for reliable browser preview and WeChat paste auto-upload.
 - `source` fields are for traceability only; never display filenames or paths in the article body.
 - `custom_sections` for occasional inserts (honor news, announcements, milestones). Do not turn the article into a separate news piece.
 - Default theme `zhengeryanzi`: static SVG marks, subtle dividers, closing signature with host/editor credits.

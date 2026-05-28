@@ -20,7 +20,7 @@ PAPER_SECTION_PATTERNS: dict[str, tuple[str, ...]] = {
     "结论": ("结论", "讨论", "启示", "conclusion", "discussion"),
 }
 TRANSCRIPT_HINTS = ("录音", "转录", "transcript", "原文")
-PAPER_HINTS = ("pdf", "doi", "摘要", "abstract")
+PAPER_HINTS = ("doi:", "doi：", "摘要", "abstract")
 
 
 def configure_stdio() -> None:
@@ -105,6 +105,22 @@ def transcript_note(record: dict[str, Any], text: str, limit: int) -> dict[str, 
         excerpt = find_section_excerpt(text, (keyword,), limit)
         if excerpt:
             cues.append({"cue": keyword, "excerpt": excerpt})
+    # Fallback: if keyword matching found fewer than 2 cues, sample evenly from paragraphs
+    if len(cues) < 2:
+        paragraphs = [p.strip() for p in re.split(r"\n\s*\n", text) if len(p.strip()) > 50]
+        if not paragraphs:
+            # Split by double newline didn't work; try single newlines with longer chunks
+            paragraphs = [p.strip() for p in text.split("\n") if len(p.strip()) > 80]
+        if paragraphs:
+            step = max(1, len(paragraphs) // 6)
+            seen_excerpts = {c["excerpt"] for c in cues}
+            for i in range(0, len(paragraphs), step):
+                excerpt = compact(paragraphs[i], limit)
+                if excerpt and excerpt not in seen_excerpts:
+                    cues.append({"cue": f"segment_{i}", "excerpt": excerpt})
+                    seen_excerpts.add(excerpt)
+                if len(cues) >= 8:
+                    break
     return {
         "source": record.get("source", ""),
         "chars": record.get("chars", len(text)),
@@ -144,10 +160,10 @@ def main() -> int:
         if not path.exists():
             continue
         text = read_text(path)
-        if looks_like_paper(record, text):
-            paper_notes.append(paper_note(record, text, args.max_section_chars))
-        elif looks_like_transcript(record, text):
+        if looks_like_transcript(record, text):
             transcript_notes.append(transcript_note(record, text, args.max_section_chars))
+        elif looks_like_paper(record, text):
+            paper_notes.append(paper_note(record, text, args.max_section_chars))
 
     (args.out / "paper_notes.json").write_text(
         json.dumps({"papers": paper_notes}, ensure_ascii=False, indent=2) + "\n",

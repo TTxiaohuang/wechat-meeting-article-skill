@@ -8,6 +8,7 @@ import base64
 import html
 import json
 import mimetypes
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -153,9 +154,15 @@ def apply_visual_style(article: dict[str, Any]) -> tuple[str, str]:
     return template, palette
 
 
+IMAGE_MARKER_RE = re.compile(r"\{\{image:([^}|]+?)(?:\|([^}]*))?\}\}")
+
+
 def paragraphs(text: str, *, size: int = 15, margin_top: int = 8) -> str:
     if not text:
         return ""
+    # Check for inline image markers {{image:src}} or {{image:src|caption}}
+    if "{{image:" in text:
+        return _render_with_inline_images(text, size=size, margin_top=margin_top)
     chunks = [part.strip() for part in str(text).replace("\r\n", "\n").split("\n\n") if part.strip()]
     if not chunks:
         chunks = [str(text).strip()]
@@ -163,6 +170,42 @@ def paragraphs(text: str, *, size: int = 15, margin_top: int = 8) -> str:
     for index, chunk in enumerate(chunks):
         rendered.append(
             f'<p style="margin:{margin_top if index == 0 else 7}px 0 0;'
+            f'color:{TEXT};font-size:{size}px;line-height:1.82;text-align:justify;">'
+            f'{esc(chunk).replace(chr(10), "<br>")}</p>'
+        )
+    return "".join(rendered)
+
+
+def _render_with_inline_images(text: str, size: int = 15, margin_top: int = 8) -> str:
+    """Render text that contains {{image:src|caption}} markers inline."""
+    parts: list[str] = []
+    last_end = 0
+    for match in IMAGE_MARKER_RE.finditer(text):
+        # Text before this marker
+        before = text[last_end:match.start()].strip()
+        if before:
+            parts.append(_text_chunks_html(before, size, margin_top if last_end == 0 else 0))
+        # The image itself
+        src = match.group(1).strip()
+        caption = (match.group(2) or "").strip()
+        parts.append(render_image({"url": src, "caption": caption} if caption else src))
+        last_end = match.end()
+    # Remaining text after last marker
+    after = text[last_end:].strip()
+    if after:
+        parts.append(_text_chunks_html(after, size, 0))
+    return "".join(parts)
+
+
+def _text_chunks_html(text: str, size: int, margin_top: int) -> str:
+    """Split text by double-newline into paragraph HTML."""
+    chunks = [p.strip() for p in text.replace("\r\n", "\n").split("\n\n") if p.strip()]
+    if not chunks:
+        chunks = [text]
+    rendered = []
+    for i, chunk in enumerate(chunks):
+        rendered.append(
+            f'<p style="margin:{margin_top if i == 0 else 7}px 0 0;'
             f'color:{TEXT};font-size:{size}px;line-height:1.82;text-align:justify;">'
             f'{esc(chunk).replace(chr(10), "<br>")}</p>'
         )
@@ -345,30 +388,31 @@ def info_card(title: str, text: str) -> str:
     )
 
 
-def quote_block(text: str, speaker: str = "") -> str:
+def quote_block(text: str, speaker: str = "", images: list[Any] | None = None) -> str:
     label_html = (
         f'<p style="margin:0 0 4px;color:{ACCENT};font-size:14px;font-weight:700;line-height:1.5;">{esc(speaker)}</p>'
         if speaker
         else ""
     )
+    images_html = render_section_images(images or [])
     if CURRENT_TEMPLATE == "minimal":
         return (
             f'<blockquote style="margin:10px 0 0;padding:0 0 0 11px;border-left:2px solid {BORDER};'
             f'color:{TEXT};line-height:1.75;">'
-            f"{label_html}{paragraphs(text, size=14, margin_top=0)}"
+            f"{label_html}{paragraphs(text, size=14, margin_top=0)}{images_html}"
             "</blockquote>"
         )
     if CURRENT_TEMPLATE == "journal":
         return (
             f'<blockquote style="margin:10px 0 0;padding:10px 0 10px 12px;border-left:3px solid {ACCENT_2};'
             f'border-top:1px solid {LINE};border-bottom:1px solid {LINE};color:{TEXT};line-height:1.75;">'
-            f"{label_html}{paragraphs(text, size=14, margin_top=0)}"
+            f"{label_html}{paragraphs(text, size=14, margin_top=0)}{images_html}"
             "</blockquote>"
         )
     return (
         f'<blockquote style="margin:10px 0 0;padding:11px 13px;border-left:3px solid {ACCENT};'
         f'background:{SOFT};color:{TEXT};line-height:1.75;">'
-        f"{label_html}{paragraphs(text, size=14, margin_top=0)}"
+        f"{label_html}{paragraphs(text, size=14, margin_top=0)}{images_html}"
         "</blockquote>"
     )
 
@@ -612,14 +656,16 @@ def render_english(data: dict[str, Any], index: int, branded: bool = False) -> s
             resolved_photo, is_ph = resolve_image_src(photo)
             if not is_ph:
                 photo_html = (
-                    f'<img src="{esc(resolved_photo)}" '
-                    f'style="width:48px;height:48px;border-radius:50%;object-fit:cover;margin-bottom:8px;" />'
+                    f'<section style="width:48px;height:48px;border-radius:50%;'
+                    f'background-image:url({esc(resolved_photo)});'
+                    f'background-size:cover;background-position:center;'
+                    f'margin-bottom:8px;"></section>'
                 )
             else:
                 photo_html = (
                     f'<section style="width:48px;height:48px;border-radius:50%;background:{SOFT};'
-                    f'border:1.5px dashed {BORDER};margin-bottom:8px;display:flex;align-items:center;'
-                    f'justify-content:center;font-size:10px;color:{MUTED};">IMG</section>'
+                    f'border:1.5px dashed {BORDER};margin-bottom:8px;'
+                    f'font-size:10px;color:{MUTED};text-align:center;line-height:48px;">IMG</section>'
                 )
         cards.append(
             f'<section style="box-sizing:border-box;display:inline-block;vertical-align:top;width:92%;'
@@ -691,7 +737,8 @@ def render_literature(data: dict[str, Any], index: int, branded: bool = False) -
                 f'<p style="margin:14px 0 0;color:{TEXT};font-size:15px;font-weight:700;line-height:1.5;">讨论摘录</p>'
             )
         for comment in comments:
-            parts.append(quote_block(comment.get("text") or "", comment.get("speaker") or ""))
+            parts.append(quote_block(comment.get("text") or "", comment.get("speaker") or "",
+                                     comment.get("images")))
         parts.append("</section>")
     return "".join(parts)
 
@@ -702,7 +749,8 @@ def render_policy(data: dict[str, Any], index: int, branded: bool = False) -> st
     parts.append(paragraphs(data.get("summary") or ""))
     parts.append(render_section_images(data.get("images") or []))
     for viewpoint in data.get("viewpoints") or []:
-        parts.append(quote_block(viewpoint.get("text") or "", viewpoint.get("speaker") or ""))
+        parts.append(quote_block(viewpoint.get("text") or "", viewpoint.get("speaker") or "",
+                                 viewpoint.get("images")))
     return "".join(parts)
 
 
@@ -710,7 +758,8 @@ def render_free_discussion(data: dict[str, Any], index: int, branded: bool = Fal
     parts = [h2(data.get("title") or "自由讨论与会议总结", index, branded)]
     parts.append(render_section_images(data.get("images") or []))
     for item in data.get("items") or []:
-        parts.append(quote_block(item.get("text") or "", item.get("speaker") or ""))
+        parts.append(quote_block(item.get("text") or "", item.get("speaker") or "",
+                                 item.get("images")))
     closing = data.get("closing") or ""
     if closing:
         parts.append(

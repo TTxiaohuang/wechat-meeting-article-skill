@@ -17,8 +17,8 @@ Present choices to the user instead of silently applying defaults. **Ask the use
 
 Ask in a single question block:
 - **Material folder path**
-- **Template** (9 options): `classic`(经典简洁), `notebook`(读书笔记), `journal`(学术笔记), `campus`(校园清新), `minimal`(极简), `magazine`(编辑排版), `warm-note`(温暖笔记), `briefing`(报告风格), `fieldnote`(田野笔记)
-- **Palette** (7 options): `classic`(蓝灰暖色), `forest`(森林绿), `blueprint`(蓝图蓝), `warm`(暖棕绿), `ink`(水墨灰黑), `sunrise`(日出珊瑚), `mono`(近单色)
+- **Template** (5 options): `classic`(经典简洁), `notebook`(读书笔记), `campus`(校园清新), `magazine`(编辑排版), `briefing`(报告风格)
+- **Palette** (9 options): `classic`(蓝灰暖色), `forest`(森林绿), `blueprint`(蓝图蓝), `warm`(暖棕绿), `ink`(水墨灰黑), `sunrise`(日出珊瑚), `mono`(近单色), `sakura`(樱花粉), `ocean`(深海蓝)
 - **Editor**: name, or confirm omission
 - **Brand theme**: confirm `zhengeryanzi` (SVG section marks + closing signature)
 
@@ -78,7 +78,7 @@ Do not silently skip any decision. If the user does not respond to a field, conf
 - **Images**: never assume what images are from filenames alone. Ask the user what each image is and where to place it. If no usable images, include placement suggestions in the final response. Use `--embed-images` to embed local images as base64 in HTML for reliable browser preview and WeChat paste auto-upload.
 - `source` fields are for traceability only; never display filenames or paths in the article body.
 - `custom_sections` for occasional inserts (honor news, announcements, milestones). Do not turn the article into a separate news piece.
-- Default theme `zhengeryanzi`: static SVG marks, subtle dividers, closing signature with host/editor credits.
+- Default theme `zhengeryanzi`: static SVG marks, subtle dividers, closing signature with host/editor credits. Supported templates: `classic`, `notebook`, `campus`, `magazine`, `briefing`. Palettes: `classic`, `forest`, `blueprint`, `warm`, `ink`, `sunrise`, `mono`, `sakura`, `ocean`.
 
 ## Dependency Setup
 

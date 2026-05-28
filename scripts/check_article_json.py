@@ -24,7 +24,7 @@ SUPPORTED_TEMPLATES = {
     "briefing",
     "fieldnote",
 }
-SUPPORTED_PALETTES = {"classic", "forest", "blueprint", "warm", "ink", "sunrise", "mono"}
+SUPPORTED_PALETTES = {"classic", "forest", "blueprint", "warm", "ink", "sunrise", "mono", "sakura", "ocean"}
 SUPPORTED_INSERT_TYPES = {"honor_news", "honor-news", "announcement", "milestone", "note"}
 SUPPORTED_PLACEMENTS = {
     "after_lead",

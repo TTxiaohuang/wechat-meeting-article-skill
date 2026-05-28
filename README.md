@@ -23,7 +23,7 @@
 ## 特性
 
 - **两轮结构化提问**：第一轮收集素材路径、模板、配色、编辑、主题；第二轮盘点后确认日期、主持人、图片、封面
-- **9 种模板 × 7 种配色**：`classic`、`notebook`、`journal`、`campus`、`minimal`、`magazine`、`warm-note`、`briefing`、`fieldnote`，搭配 `classic`、`forest`、`blueprint`、`warm`、`ink`、`sunrise`、`mono`
+- **5 种模板 × 9 种配色**：`classic`、`notebook`、`campus`、`magazine`、`briefing`，搭配 `classic`、`forest`、`blueprint`、`warm`、`ink`、`sunrise`、`mono`、`sakura`、`ocean`
 - **文献结构化**：研究背景、研究问题、方法与数据、核心发现、讨论价值、讨论摘录
 - **ASR 发言人识别**：利用 PPT 分享人、英语交流顺序、交互模式等线索匹配发言人
 - **日期推断优先级**：转录时间戳 > 用户提供 > PPT 元数据 > 文件名 > 文件修改时间

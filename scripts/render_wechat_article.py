@@ -87,22 +87,48 @@ PALETTES: dict[str, dict[str, str]] = {
         "border": "#e1e4e8",
         "line": "#eceff2",
     },
+    "sakura": {
+        "accent": "#c46b8a",
+        "accent_2": "#8a6b5e",
+        "soft": "#fdf2f5",
+        "warm": "#fff8f0",
+        "border": "#f0d4de",
+        "line": "#f5e4ea",
+    },
+    "ocean": {
+        "accent": "#1a6b8a",
+        "accent_2": "#4a7a5e",
+        "soft": "#eef6fa",
+        "warm": "#f5faf7",
+        "border": "#c8dde8",
+        "line": "#dde9f0",
+    },
 }
 
 TEMPLATE_ALIASES = {
     "default": "classic",
     "intro": "classic",
     "simple": "classic",
+    "journal": "classic",
+    "minimal": "classic",
     "brief": "briefing",
     "report": "briefing",
+    "fieldnote": "briefing",
     "reading-note": "notebook",
     "notes": "notebook",
-    "warmnote": "warm-note",
-    "warm_notes": "warm-note",
-    "academic": "journal",
+    "warmnote": "notebook",
+    "warm-note": "notebook",
+    "warm_notes": "notebook",
+    "academic": "classic",
     "school": "campus",
-    "clean": "minimal",
     "editorial": "magazine",
+}
+SUPPORTED_TEMPLATES = {
+    "classic",
+    "notebook",
+    "campus",
+    "magazine",
+    "briefing",
 }
 SUPPORTED_TEMPLATES = {
     "classic",
@@ -292,28 +318,12 @@ def h2(title: str, index: int | None = None, branded: bool = False) -> str:
             f'{title_html}</p>'
             "</section>"
         )
-    if CURRENT_TEMPLATE == "journal":
-        return (
-            f'<section style="margin:30px 0 13px;padding:0 0 9px;border-bottom:1px solid {LINE};">'
-            f'<p style="margin:0;color:{ACCENT_2};font-size:12px;font-weight:800;line-height:1.4;">'
-            f'{number or "SECTION"}</p>'
-            f'<p style="margin:3px 0 0;color:{TEXT};font-size:20px;font-weight:800;line-height:1.45;">'
-            f'{brand_section_mark() if branded else ""}{esc(title)}</p>'
-            "</section>"
-        )
     if CURRENT_TEMPLATE == "campus":
         return (
             f'<section style="margin:30px 0 14px;padding:11px 13px;border:1px solid {BORDER};'
             f'border-radius:8px;background:{SOFT};">'
             f'<p style="margin:0;color:{TEXT};font-size:19px;font-weight:800;line-height:1.45;">'
             f'{number_html}{brand_section_mark() if branded else ""}{esc(title)}</p>'
-            "</section>"
-        )
-    if CURRENT_TEMPLATE == "minimal":
-        return (
-            f'<section style="margin:28px 0 12px;padding:0 0 6px;border-bottom:1px solid {LINE};">'
-            f'<p style="margin:0;color:{TEXT};font-size:18px;font-weight:800;line-height:1.45;">'
-            f'{number_html}{esc(title)}</p>'
             "</section>"
         )
     if CURRENT_TEMPLATE == "magazine":
@@ -324,14 +334,6 @@ def h2(title: str, index: int | None = None, branded: bool = False) -> str:
             f'<p style="margin:3px 0 0;color:{TEXT};font-size:21px;font-weight:900;line-height:1.35;">'
             f'{brand_section_mark() if branded else ""}{esc(title)}</p>'
             f'<p style="margin:8px 0 0;width:100%;border-top:3px solid {ACCENT};"></p>'
-            "</section>"
-        )
-    if CURRENT_TEMPLATE == "warm-note":
-        return (
-            f'<section style="margin:30px 0 14px;padding:10px 12px;border:1px solid {BORDER};'
-            f'border-left:5px solid {ACCENT_2};border-radius:8px;background:{WARM};">'
-            f'<p style="margin:0;color:{TEXT};font-size:19px;font-weight:800;line-height:1.45;">'
-            f'{title_html}</p>'
             "</section>"
         )
     if CURRENT_TEMPLATE == "briefing":
@@ -348,16 +350,7 @@ def h2(title: str, index: int | None = None, branded: bool = False) -> str:
             f'{number_chip}{brand_section_mark() if branded else ""}{esc(title)}</p>'
             "</section>"
         )
-    if CURRENT_TEMPLATE == "fieldnote":
-        return (
-            f'<section style="margin:30px 0 14px;padding:0;">'
-            f'<p style="margin:0 0 5px;color:{ACCENT_2};font-size:12px;font-weight:800;line-height:1.4;">'
-            f'{number or "NOTE"}</p>'
-            f'<p style="margin:0;color:{TEXT};font-size:19px;font-weight:800;line-height:1.45;">'
-            f'{brand_section_mark() if branded else ""}{esc(title)}</p>'
-            f'<p style="margin:8px 0 0;border-top:1px solid {LINE};border-bottom:1px solid {LINE};height:3px;"></p>'
-            "</section>"
-        )
+    # classic (default)
     return (
         '<section style="margin:30px 0 14px;padding:0 0 8px;border-bottom:1px solid #eef2f4;">'
         f'<p style="margin:0;color:{TEXT};font-size:19px;font-weight:800;line-height:1.45;">'
@@ -395,16 +388,9 @@ def quote_block(text: str, speaker: str = "", images: list[Any] | None = None) -
         else ""
     )
     images_html = render_section_images(images or [])
-    if CURRENT_TEMPLATE == "minimal":
+    if CURRENT_TEMPLATE == "notebook":
         return (
-            f'<blockquote style="margin:10px 0 0;padding:0 0 0 11px;border-left:2px solid {BORDER};'
-            f'color:{TEXT};line-height:1.75;">'
-            f"{label_html}{paragraphs(text, size=14, margin_top=0)}{images_html}"
-            "</blockquote>"
-        )
-    if CURRENT_TEMPLATE == "journal":
-        return (
-            f'<blockquote style="margin:10px 0 0;padding:10px 0 10px 12px;border-left:3px solid {ACCENT_2};'
+            f'<blockquote style="margin:10px 0 0;padding:10px 0 10px 12px;border-left:3px solid {ACCENT};'
             f'border-top:1px solid {LINE};border-bottom:1px solid {LINE};color:{TEXT};line-height:1.75;">'
             f"{label_html}{paragraphs(text, size=14, margin_top=0)}{images_html}"
             "</blockquote>"
@@ -480,17 +466,11 @@ def render_section_images(images: list[Any]) -> str:
 def render_summary_card(summary: str) -> str:
     if not summary:
         return ""
-    if CURRENT_TEMPLATE == "minimal":
+    if CURRENT_TEMPLATE == "notebook":
         return (
-            f'<section style="margin:12px 0 4px;padding:0 0 12px;border-bottom:1px solid {LINE};">'
+            f'<section style="margin:12px 0 4px;padding:10px 12px;border-left:4px solid {ACCENT};'
+            f'background:{SOFT};border-radius:0 8px 8px 0;">'
             f'<p style="margin:0;color:{ACCENT};font-size:14px;font-weight:800;line-height:1.5;">本期导读</p>'
-            f'{paragraphs(summary, size=14, margin_top=5)}'
-            "</section>"
-        )
-    if CURRENT_TEMPLATE == "journal":
-        return (
-            f'<section style="margin:12px 0 4px;padding:12px 0;border-top:1px solid {LINE};border-bottom:1px solid {LINE};">'
-            f'<p style="margin:0;color:{ACCENT_2};font-size:13px;font-weight:800;line-height:1.5;">ABSTRACT</p>'
             f'{paragraphs(summary, size=14, margin_top=5)}'
             "</section>"
         )
@@ -510,14 +490,6 @@ def render_summary_card(summary: str) -> str:
             f'{paragraphs(summary, size=15, margin_top=5)}'
             "</section>"
         )
-    if CURRENT_TEMPLATE == "warm-note":
-        return (
-            f'<section style="margin:12px 0 4px;padding:13px 14px;border-radius:8px;'
-            f'background:{WARM};border:1px dashed {BORDER};">'
-            f'<p style="margin:0;color:{ACCENT_2};font-size:14px;font-weight:800;line-height:1.5;">本期导读</p>'
-            f'{paragraphs(summary, size=14, margin_top=5)}'
-            "</section>"
-        )
     if CURRENT_TEMPLATE == "briefing":
         return (
             f'<section style="margin:12px 0 4px;padding:13px 14px;border-top:2px solid {ACCENT_2};'
@@ -526,13 +498,7 @@ def render_summary_card(summary: str) -> str:
             f'{paragraphs(summary, size=14, margin_top=5)}'
             "</section>"
         )
-    if CURRENT_TEMPLATE == "fieldnote":
-        return (
-            f'<section style="margin:12px 0 4px;padding:12px 0;border-top:1px solid {LINE};border-bottom:1px solid {LINE};">'
-            f'<p style="margin:0;color:{ACCENT_2};font-size:14px;font-weight:800;line-height:1.5;">本期导读</p>'
-            f'{paragraphs(summary, size=14, margin_top=5)}'
-            "</section>"
-        )
+    # classic (default)
     return (
         f'<section style="margin:12px 0 4px;padding:13px 14px;border-radius:8px;'
         f'background:{WARM};border:1px solid #efe6cf;">'

@@ -7,7 +7,7 @@ Use this reference before drafting or revising the article content.
 1. Preserve factual accuracy and speaker attribution.
 2. Make the article read like a polished WeChat post, not an extraction report.
 3. Keep source filenames and local paths out of the visible article.
-4. Use flexible sections: omit unsupported meeting sections instead of forcing a template.
+4. Use flexible sections: omit unsupported meeting sections instead of forcing a template. For non-standard meeting structures, use the `sessions` array with custom `type` values — the renderer handles any session type generically.
 5. Keep `source` fields in `article.json` for private verification. Create `source_trace.md` only when the user asks for traceability, audit notes, or citation mapping.
 6. Treat deterministic scaffold files and `article_notes` as inventory aids only. The final article must be synthesized by reading the extracted materials.
 7. Treat a failed `check_article_json.py` result as a stop signal. Fix the issue or ask the user to accept the exact risk; do not waive it silently.

@@ -180,6 +180,28 @@ def check_custom_sections(article: dict[str, Any]) -> list[str]:
     return issues
 
 
+def check_sessions(article: dict[str, Any]) -> list[str]:
+    sessions = article.get("sessions")
+    if not sessions:
+        return []
+    if not isinstance(sessions, list):
+        return ["sessions must be an array"]
+    issues: list[str] = []
+    for index, session in enumerate(sessions, start=1):
+        if not isinstance(session, dict):
+            issues.append(f"session {index} must be an object")
+            continue
+        title = str(session.get("title") or "").strip()
+        if not title:
+            issues.append(f"session {index} lacks title")
+        items = session.get("items") or []
+        if not isinstance(items, list):
+            issues.append(f"session {index} items must be an array")
+        elif not items:
+            issues.append(f"session {index} has no items")
+    return issues
+
+
 def check_html(html_path: Path | None) -> list[str]:
     if not html_path:
         return []
@@ -209,6 +231,7 @@ def main() -> int:
     issues.extend(check_literature(article))
     issues.extend(check_english(article))
     issues.extend(check_custom_sections(article))
+    issues.extend(check_sessions(article))
     issues.extend(check_html(args.html))
 
     if not issues:

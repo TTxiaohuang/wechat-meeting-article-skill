@@ -341,3 +341,4 @@ python -m unittest discover -s tests -v
 | `references/material-extraction.md` | 素材提取和 ASR 处理策略 |
 | `references/wechat-formatting.md` | HTML/SVG 微信兼容性说明 |
 | `references/wechat-api.md` | 微信公众号 API（高级用法） |
+| `references/intake-gate-ui.md` | Intake Gate UI 约束（`AskUserQuestion` 选项格式） |

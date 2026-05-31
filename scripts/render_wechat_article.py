@@ -781,6 +781,39 @@ def render_free_discussion(data: dict[str, Any], index: int, branded: bool = Fal
     return "".join(parts)
 
 
+def render_generic_session(data: dict[str, Any], index: int, branded: bool = False) -> str:
+    title = data.get("title") or data.get("type") or "环节"
+    parts = [h2(title, index, branded)]
+    topic = data.get("topic") or ""
+    if topic:
+        parts.append(tag(topic))
+    intro = data.get("intro") or data.get("summary") or ""
+    if intro:
+        parts.append(paragraphs(intro))
+    parts.append(render_section_images(data.get("images") or []))
+    for item in data.get("items") or []:
+        parts.append(quote_block(item.get("text") or "", item.get("speaker") or "",
+                                 item.get("images")))
+    closing = data.get("closing") or ""
+    if closing:
+        parts.append(
+            f'<section style="margin:14px 0 0;padding:14px;border:1px solid {BORDER};'
+            f'border-radius:8px;background:#ffffff;">'
+            f'<p style="margin:0;color:{ACCENT};font-size:15px;font-weight:800;line-height:1.5;">小结</p>'
+            f'{paragraphs(closing, size=15, margin_top=6)}'
+            "</section>"
+        )
+    return "".join(parts)
+
+
+SECTION_RENDERERS: dict[str, Any] = {
+    "english_exchange": render_english,
+    "literature_sharing": render_literature,
+    "policy_discussion": render_policy,
+    "free_discussion": render_free_discussion,
+}
+
+
 def render_article(article: dict[str, Any]) -> str:
     template_name, palette_name = apply_visual_style(article)
     meta = article.get("meta") or {}
@@ -804,19 +837,28 @@ def render_article(article: dict[str, Any]) -> str:
         parts.append(render_summary_card(meta.get("summary") or ""))
     parts.append(render_custom_sections(article, "after_lead"))
 
-    section_order = [
-        ("english_exchange", render_english),
-        ("literature_sharing", render_literature),
-        ("policy_discussion", render_policy),
-        ("free_discussion", render_free_discussion),
-    ]
-    visible_index = 1
-    for key, renderer in section_order:
-        parts.append(render_custom_sections(article, f"before_{key}"))
-        if sections.get(key):
-            parts.append(renderer(sections[key], visible_index, branded))
-            visible_index += 1
-        parts.append(render_custom_sections(article, f"after_{key}"))
+    sessions = article.get("sessions")
+    if sessions:
+        # New path: ordered sessions array takes precedence
+        for idx, session in enumerate(sessions, start=1):
+            s_type = session.get("type", "")
+            renderer = SECTION_RENDERERS.get(s_type, render_generic_session)
+            parts.append(renderer(session, idx, branded))
+    else:
+        # Legacy path: fixed section_order
+        section_order = [
+            ("english_exchange", render_english),
+            ("literature_sharing", render_literature),
+            ("policy_discussion", render_policy),
+            ("free_discussion", render_free_discussion),
+        ]
+        visible_index = 1
+        for key, renderer in section_order:
+            parts.append(render_custom_sections(article, f"before_{key}"))
+            if sections.get(key):
+                parts.append(renderer(sections[key], visible_index, branded))
+                visible_index += 1
+            parts.append(render_custom_sections(article, f"after_{key}"))
     parts.append(render_custom_sections(article, "before_closing"))
     if branded:
         parts.append(render_brand_signature(meta))

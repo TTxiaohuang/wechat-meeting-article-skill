@@ -599,6 +599,135 @@ class SkillScriptTests(unittest.TestCase):
             f"description should start with 'Use when', got: {description[:60]}",
         )
 
+    def test_renderer_renders_generic_sessions(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            article = {
+                "meta": {"title": "测试", "date": "2026-05-31", "group": "课题组", "host": "主持人"},
+                "sessions": [
+                    {
+                        "type": "graduation_career_sharing",
+                        "title": "毕业论文与就业分享",
+                        "topic": "求职经验",
+                        "intro": "三位同学分享经验。",
+                        "items": [
+                            {"speaker": "李四", "text": "我主要分享了简历撰写的经验和面试技巧。"},
+                            {"speaker": "王五", "text": "我介绍了考公的准备过程。"},
+                        ],
+                    }
+                ],
+            }
+            article_path = tmp_path / "article.json"
+            out_dir = tmp_path / "dist"
+            article_path.write_text(json.dumps(article, ensure_ascii=False), encoding="utf-8")
+
+            result = run_script("render_wechat_article.py", str(article_path), "--out", str(out_dir))
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            html = (out_dir / "article.wechat.html").read_text(encoding="utf-8")
+            self.assertIn("毕业论文与就业分享", html)
+            self.assertIn("求职经验", html)
+            self.assertIn("李四", html)
+            self.assertIn("简历撰写", html)
+
+    def test_renderer_sessions_mixed_predefined_and_generic(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            article = {
+                "meta": {"title": "混合测试", "summary": "导读内容" * 20},
+                "sessions": [
+                    {
+                        "type": "english_exchange",
+                        "title": "英语交流",
+                        "speeches": [
+                            {"speaker": "James", "text": "Hello everyone, today I want to talk about research."}
+                        ],
+                    },
+                    {
+                        "type": "thesis_defense_prep",
+                        "title": "毕业预答辩",
+                        "items": [
+                            {"speaker": "张三", "text": "介绍了论文的研究方法和主要结论。"}
+                        ],
+                    },
+                ],
+            }
+            article_path = tmp_path / "article.json"
+            out_dir = tmp_path / "dist"
+            article_path.write_text(json.dumps(article, ensure_ascii=False), encoding="utf-8")
+
+            result = run_script("render_wechat_article.py", str(article_path), "--out", str(out_dir))
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            html = (out_dir / "article.wechat.html").read_text(encoding="utf-8")
+            self.assertIn("英语交流", html)
+            self.assertIn("James", html)
+            self.assertIn("毕业预答辩", html)
+            self.assertIn("张三", html)
+
+    def test_renderer_sessions_takes_precedence_over_sections(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            article = {
+                "meta": {"title": "优先级测试", "summary": "导读内容" * 20},
+                "sections": {
+                    "free_discussion": {
+                        "title": "来自sections",
+                        "items": [{"speaker": "A", "text": "这段不应该被渲染。" * 10}],
+                    }
+                },
+                "sessions": [
+                    {
+                        "type": "free_discussion",
+                        "title": "来自sessions",
+                        "items": [{"speaker": "B", "text": "这段应该被渲染。" * 10}],
+                    }
+                ],
+            }
+            article_path = tmp_path / "article.json"
+            out_dir = tmp_path / "dist"
+            article_path.write_text(json.dumps(article, ensure_ascii=False), encoding="utf-8")
+
+            result = run_script("render_wechat_article.py", str(article_path), "--out", str(out_dir))
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            html = (out_dir / "article.wechat.html").read_text(encoding="utf-8")
+            self.assertIn("来自sessions", html)
+            self.assertNotIn("来自sections", html)
+
+    def test_check_article_json_validates_sessions(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            article = {
+                "_meta": {
+                    "intake_gate": {
+                        "material_folder": {"value": "D:/素材", "status": "user_provided"},
+                        "date": {"value": "2026-05-31", "status": "user_provided"},
+                        "editor": {"value": "编辑", "status": "user_provided"},
+                        "visual_style": {"value": "classic", "status": "default_confirmed"},
+                    }
+                },
+                "meta": {
+                    "title": "第 X 周组会纪要",
+                    "date": "2026-05-31",
+                    "group": "课题组",
+                    "host": "主持人",
+                    "editor": "编辑",
+                    "summary": "本次组会围绕多个主题展开讨论。" * 20,
+                },
+                "sessions": [
+                    {"type": "custom", "title": "", "items": []},
+                ],
+            }
+            article_path = tmp_path / "article.json"
+            article_path.write_text(json.dumps(article, ensure_ascii=False), encoding="utf-8")
+
+            result = run_script("check_article_json.py", str(article_path))
+
+            self.assertEqual(result.returncode, 1)
+            self.assertIn("lacks title", result.stdout)
+            self.assertIn("no items", result.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()

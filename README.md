@@ -10,11 +10,15 @@
 
 ### 输入（你提供）
 
-- 录音转录稿（`.docx`、`.txt`、`.md`）
-- 英语交流发言稿（`.docx`、`.txt`）
-- 文献 PDF / PPT（`.pdf`、`.pptx`）
-- 会议照片（`.jpg`、`.png`）
-- 其他材料（获奖喜讯、通知等）
+| 素材类型 | 格式 | 必要性 |
+|----------|------|--------|
+| 录音转录稿 | `.docx`、`.txt`、`.md` | 推荐 |
+| 英语交流发言稿 | `.docx`、`.txt` | 推荐 |
+| 分享的论文 | `.pdf` | 推荐 |
+| 组会 PPT | `.pptx` | 推荐 |
+| 会议照片、证书图片等 | `.jpg`、`.png` | 可选 |
+
+> 转录稿是噪声源——ASR 识别常有错误。PPT 和 PDF 能提供准确的论文信息，建议至少准备这两样。
 
 ### 输出（技能生成）
 
@@ -24,6 +28,43 @@
 | `article.wechat.html` | 微信兼容的 HTML，可直接粘贴到公众号 |
 | `article.preview.html` | 浏览器预览版，方便检查排版效果 |
 | `article_notes/` | 长材料的中间笔记（可选） |
+
+## 整体流程一览
+
+技能运行时，AI 会分**两轮**向你提问，中间自动处理素材：
+
+```
+准备素材文件夹
+       │
+       ▼
+┌─────────────────────────────────────┐
+│  第一轮提问（5 个问题）              │
+│  ① 素材文件夹路径                    │
+│  ② 会议类型（标准/有额外/完全不同）  │
+│  ③ 文章模板（5 种可选）              │
+│  ④ 配色方案（9 种可选）              │
+│  ⑤ 编辑姓名（用于署名）              │
+└─────────────────────────────────────┘
+       │
+       ▼
+  AI 自动提取素材文字（安装依赖、扫描文件）
+       │
+       ▼
+┌─────────────────────────────────────┐
+│  第二轮提问                          │
+│  ① 确认日期、主持人                  │
+│  ② 逐张确认图片内容和放置位置        │
+│  ③ 可选插页（喜报、通知、里程碑）    │
+└─────────────────────────────────────┘
+       │
+       ▼
+  AI 自动编写推文 → 渲染排版 → 质检
+       │
+       ▼
+  交付：预览 HTML + 复核建议
+```
+
+> **注意：** 不是点一下就完事。两轮提问之间需要你配合回答问题，特别是图片确认——AI 不会自己猜图片内容，每张都会问你。
 
 ## 环境准备
 
@@ -52,7 +93,7 @@ python --version
 python -m pip install python-docx python-pptx pdfplumber pypdf
 ```
 
-> 这些库用于从 Word、PPT、PDF 中提取文字。如果只需要处理 `.txt` 和 `.md` 文件，可以跳过这一步。
+> 这些库用于从 Word、PPT、PDF 中提取文字。AI 在首次运行时也会自动安装，但提前装好可以避免等待。
 
 **国内加速**（如果下载很慢）：
 
@@ -72,7 +113,17 @@ $env:PYTHONIOENCODING="utf-8"
 
 ## 安装技能
 
-### 方式一：Git 克隆（推荐）
+### 方式一：Agent 自动安装（最简单）
+
+在 Claude Code、Codex 或 WorkBuddy 中发送：
+
+```
+请帮我安装这个skill：https://github.com/TTxiaohuang/wechat-meeting-article-skill
+```
+
+安装只需一次，以后每次使用无需重复安装。
+
+### 方式二：Git 克隆手动安装
 
 ```bash
 git clone https://github.com/TTxiaohuang/wechat-meeting-article-skill.git
@@ -84,12 +135,6 @@ git clone https://github.com/TTxiaohuang/wechat-meeting-article-skill.git
 - **Codex**: `~/.codex/skills/wechat-meeting-article/`
 
 > `~` 在 Windows 上通常是 `C:\Users\你的用户名\`
-
-### 方式二：Codex 一键安装
-
-```
-Use $skill-installer to install TTxiaohuang/wechat-meeting-article-skill path skills/wechat-meeting-article
-```
 
 ### 安装后的目录结构
 
@@ -119,27 +164,28 @@ wechat-meeting-article/
 
 ## 使用方式
 
-### 方式一：让 Agent 自动引导（最简单）
+### 方式一：让 Agent 自动引导（推荐）
 
 在 Claude Code 或 Codex 中告诉 Agent：
 
 ```
-请读取 wechat-meeting-article 技能，帮我把组会材料生成微信公众号推文。
+我要制作推文
 ```
 
 Agent 会：
 
-1. 问你几个问题（素材在哪里、选什么模板和配色等）
-2. 扫描你的素材文件夹
-3. 再问你几个问题（日期、图片用途、可选插页等）
-4. 自动提取文字、生成文章、渲染 HTML
-5. 告诉你怎么把文章粘贴到微信公众号
+1. **第一轮提问**：素材路径 → 会议类型 → 模板 → 配色 → 编辑姓名
+2. **自动提取素材**：扫描文件夹、安装依赖、提取文字
+3. **第二轮提问**：确认日期主持人 → 逐张确认图片 → 可选插页
+4. **自动编写推文**：阅读编辑规范、撰写 `article.json`、渲染 HTML
+5. **自动质检**：运行 `check_article_json.py`，发现问题自动修复
+6. **交付**：告诉你预览文件位置，建议公众号标题和摘要
 
 **你只需要回答 Agent 的问题，其他全自动。**
 
 ### 方式二：命令行手动执行
 
-如果你想手动控制每一步，或者想了解底层流程：
+如果你想手动控制每一步：
 
 **第一步：准备素材文件夹**
 
@@ -185,21 +231,21 @@ python scripts/prepare_article_notes.py extracted_materials --out article_notes
 
 完整的格式规范见 `references/input-contract.md`。
 
+> **重要：** 不要手写 JSON 字符串——中文引号会导致编码错误。用 `scripts/write_article_json.py` 写 Python dict 再转 JSON，或用 `json.dump()`。
+
 **第五步：渲染 HTML**
 
 ```bash
 python scripts/render_wechat_article.py article.json --out dist
 ```
 
-生成两个文件：
-- `dist/article.wechat.html` — 微信兼容 HTML
-- `dist/article.preview.html` — 浏览器预览版
-
 如果文章中有本地图片，加 `--embed-images` 让图片嵌入 HTML：
 
 ```bash
 python scripts/render_wechat_article.py article.json --out dist --embed-images
 ```
+
+> **注意：** 使用 `--embed-images` 时，必须在素材文件夹目录下运行渲染命令，否则相对路径的图片无法嵌入。
 
 **第六步：质量检查**
 
@@ -213,37 +259,39 @@ python scripts/check_article_json.py article.json --html dist/article.wechat.htm
 
 ## 导入微信公众号
 
-### 方法一：浏览器复制（推荐）
+### 复制粘贴（推荐）
 
-1. 用浏览器打开 `dist/article.preview.html`
-2. `Ctrl+A` 全选页面内容
-3. `Ctrl+C` 复制
-4. 打开微信公众号后台编辑器
-5. `Ctrl+V` 粘贴
-6. 手机预览确认排版无误后发布
+1. 用浏览器打开 `dist/article.preview.html` 预览效果
+2. 用浏览器打开 `dist/article.wechat.html`（这个版本专门用于复制）
+3. `Ctrl+A` 全选页面内容
+4. `Ctrl+C` 复制
+5. 打开微信公众号后台编辑器，点击**正文输入区域**
+6. `Ctrl+V` 粘贴
 
-> **注意：** 不要直接打开 `article.wechat.html` 的源码复制！那样会把 HTML 标签也复制进去。一定要打开 `article.preview.html`，复制**渲染后的富文本**。
-
-### 方法二：使用第三方编辑器
-
-也可以导入以下工具后再复制到微信：
-
-- [doocs/md](https://github.com/doocs/md) — Markdown 编辑器
-- 135 编辑器 — 支持 HTML 源码导入
-- 秀米 — 支持 HTML 导入
-
-导入后检查横滑卡片和引用块，因为编辑器可能会清理部分样式。
+> **注意：** 不要直接复制 `article.wechat.html` 的源码！那样会把 HTML 标签也复制进去。一定要在浏览器中打开，复制渲染后的富文本。
 
 ### 记得填写这些字段
 
 粘贴正文后，还需要在微信公众号后台手动填写：
 
-- **公众号标题**：来自 `article.json` 的 `meta.title`
-- **摘要**：基于 `meta.summary` 的一句话概括
+- **公众号标题**：来自 AI 建议的标题，或 `article.json` 的 `meta.title`
+- **摘要**：基于 AI 建议的摘要，或 `meta.summary` 的一句话概括
+
+## 会议类型说明
+
+技能支持三种会议类型，AI 在第一轮提问时会让你选择：
+
+| 类型 | 说明 | 文章结构 |
+|------|------|----------|
+| **标准流程** | 英语交流、文献分享、时政交流、自由讨论等常规环节 | 使用 `sections`，按固定顺序排列 |
+| **有额外环节** | 在标准流程基础上增加了毕业分享、开题报告等 | 使用 `sessions`，AI 会追问具体新增了哪些环节 |
+| **完全不同的流程** | 与常规读书分享会完全不一样的安排 | 使用 `sessions`，AI 会请用户描述完整环节列表 |
+
+> 时政交流环节如果本次没有，选"标准流程"后告诉 AI 跳过即可。
 
 ## 模板和配色
 
-技能内置 5 种模板和 9 种配色，可以自由搭配：
+技能内置 5 种模板和 9 种配色，可以自由搭配。AI 在第一轮提问时会让你选择，也可以选"更多"查看全部选项。
 
 ### 模板
 
@@ -283,6 +331,12 @@ Python 没有加入系统 PATH。重新安装 Python，安装时勾选 **"Add Py
 python -m pip install python-docx python-pptx pdfplumber pypdf
 ```
 
+国内加速：
+
+```bash
+python -m pip install python-docx python-pptx pdfplumber pypdf -i https://pypi.tuna.tsinghua.edu.cn/simple
+```
+
 ### Q: 中文输出变成乱码
 
 Windows 终端默认编码不是 UTF-8。运行：
@@ -302,7 +356,7 @@ $env:PYTHONIOENCODING="utf-8"
 两种情况：
 
 1. **没加 `--embed-images`**：本地图片需要嵌入才能在浏览器预览中显示。加上这个参数重新渲染。
-2. **图片路径不对**：检查 `article.json` 中图片路径是否正确。路径相对于 `article.json` 所在目录。
+2. **没在素材文件夹目录下运行**：使用 `--embed-images` 时，必须在素材文件夹目录下运行渲染命令，否则相对路径的图片无法嵌入。
 
 ### Q: 微信编辑器里排版和预览不一样
 
@@ -312,9 +366,13 @@ $env:PYTHONIOENCODING="utf-8"
 - 粘贴后用手机预览检查
 - 避免使用复杂的 CSS 特性
 
-### Q: 素材文件夹里有子文件夹，文件没被提取
+### Q: AI 为什么要问那么多问题？
 
-默认会递归扫描子文件夹。如果仍然没有，请检查文件扩展名是否为 `.docx`、`.pptx`、`.pdf`、`.txt`、`.md` 中的一种。
+AI 需要确认会议类型（决定文章结构）、模板配色（决定视觉风格）、图片内容（不猜只问）。这些信息直接影响推文质量，跳过会导致排版错误或内容遗漏。两轮提问加起来大约 10 个问题，回答起来很快。
+
+### Q: 生成的推文可以直接发吗？
+
+不建议直接发。AI 生成的是高质量草稿，但仍需人工复核人名、论文信息等关键内容。特别是 ASR 转录的发言内容，可能有识别错误。AI 会提供复核建议清单，按照清单检查即可。
 
 ## 运行测试
 

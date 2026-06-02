@@ -66,51 +66,6 @@
 
 > **注意：** 不是点一下就完事。两轮提问之间需要你配合回答问题，特别是图片确认——AI 不会自己猜图片内容，每张都会问你。
 
-## 环境准备
-
-### 1. 安装 Python
-
-本技能需要 **Python 3.8 或更高版本**。
-
-**检查是否已安装：**
-
-打开终端（Windows 按 `Win+R` 输入 `cmd` 回车），输入：
-
-```bash
-python --version
-```
-
-如果显示 `Python 3.x.x` 就说明已安装。如果提示"不是内部命令"，需要先安装 Python：
-
-- 去 [python.org](https://www.python.org/downloads/) 下载最新版
-- **安装时务必勾选 "Add Python to PATH"**（很重要！）
-
-### 2. 安装依赖库
-
-在终端中运行：
-
-```bash
-python -m pip install python-docx python-pptx pdfplumber pypdf
-```
-
-> 这些库用于从 Word、PPT、PDF 中提取文字。AI 在首次运行时也会自动安装，但提前装好可以避免等待。
-
-**国内加速**（如果下载很慢）：
-
-```bash
-python -m pip install python-docx python-pptx pdfplumber pypdf -i https://pypi.tuna.tsinghua.edu.cn/simple
-```
-
-### 3. Windows 用户额外设置
-
-如果后续出现中文乱码，在终端中运行：
-
-```powershell
-$env:PYTHONIOENCODING="utf-8"
-```
-
-或者在 PowerShell 配置文件中永久添加，避免每次都设置。
-
 ## 安装技能
 
 ### 方式一：Agent 自动安装（最简单）
@@ -318,34 +273,6 @@ python scripts/check_article_json.py article.json --html dist/article.wechat.htm
 | `ocean` | 深海蓝 | 沉静专业 |
 
 ## 常见问题
-
-### Q: 报错 "python 不是内部或外部命令"
-
-Python 没有加入系统 PATH。重新安装 Python，安装时勾选 **"Add Python to PATH"**。
-
-### Q: 报错 "No module named 'docx'" 或类似错误
-
-没装依赖库。运行：
-
-```bash
-python -m pip install python-docx python-pptx pdfplumber pypdf
-```
-
-国内加速：
-
-```bash
-python -m pip install python-docx python-pptx pdfplumber pypdf -i https://pypi.tuna.tsinghua.edu.cn/simple
-```
-
-### Q: 中文输出变成乱码
-
-Windows 终端默认编码不是 UTF-8。运行：
-
-```powershell
-$env:PYTHONIOENCODING="utf-8"
-```
-
-然后再执行之前的命令。
 
 ### Q: 质量检查报错 "scaffold-generated article must be expanded"
 

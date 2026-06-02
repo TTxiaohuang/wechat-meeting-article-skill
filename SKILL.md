@@ -41,13 +41,15 @@ digraph intake_gate {
     node [shape=box];
 
     start [label="User asks for article" shape=ellipse];
-    r1 [label="Round 1: Before inspection\n(4 separate questions)"];
+    r1 [label="Round 1: Before inspection\n(5 separate questions)"];
     ask_folder [label="Ask: material folder path"];
+    ask_type [label="Ask: meeting type\n标准/有额外/完全不同"];
     ask_template [label="Ask: template\n(3 buttons + 'more')"];
     ask_palette [label="Ask: palette\n(3 buttons + 'more')"];
     ask_editor [label="Ask: editor name\nor 留空"];
     extract [label="Extract materials\nextract_materials.py"];
     r2 [label="Round 2: After inventory"];
+    ask_sessions [label="Confirm sessions\n(only if non-standard)"];
     ask_date [label="Confirm: date/host\n(infer first)"];
     ask_images [label="Ask: EVERY image\n(filename ≠ meaning)"];
     ask_inserts [label="Ask: optional inserts\n(honor, announcement, milestone)"];
@@ -55,15 +57,23 @@ digraph intake_gate {
     render [label="Render → Check → Deliver"];
 
     start -> r1;
-    r1 -> ask_folder -> ask_template -> ask_palette -> ask_editor -> extract;
+    r1 -> ask_folder -> ask_type -> ask_template -> ask_palette -> ask_editor -> extract;
     extract -> r2;
-    r2 -> ask_date -> ask_images -> ask_inserts -> draft -> render;
+    r2 -> ask_sessions -> ask_date -> ask_images -> ask_inserts -> draft -> render;
 }
 ```
 
 **UI constraint**: `AskUserQuestion` 每题限 4 个选项按钮。超过 4 个时，前 3 个放常用选项，第 4 个放"更多"。用户选"更多"后，用新问题展示剩余选项（格式同第一轮）。**所有 label 必须用中文**，英文名仅用于写入 `article.json` 的值。
 
 **⚠️ 严格遵从：以下选项是精确定义的，必须逐字使用。不要根据技能名称、上下文或其他信息自行编造选项。不允许出现"读书分享会"、"学术绿"等不在下方列表中的选项。**
+
+**Round 1 会议类型**（question: "本次组会是什么类型？", header: "会议类型"，在素材路径之后、模板之前提问）：
+1. `{label: "标准流程", description: "英语交流、文献分享、时政交流、自由讨论等常规环节"}`
+2. `{label: "有额外环节", description: "在标准流程基础上增加了毕业分享、就业分享、开题报告等"}`
+3. `{label: "完全不同的流程", description: "与常规读书分享会完全不一样的安排，我来说明"}`
+- 选"标准流程"：使用 `sections`，agent 按标准顺序组织
+- 选"有额外环节"：使用 `sessions`，agent 在 Round 2 追问具体新增了哪些环节
+- 选"完全不同的流程"：使用 `sessions`，agent 在 Round 2 请用户描述完整环节列表
 
 **Round 1 模板选项**（question: "选择文章模板", header: "模板"）：
 1. `{label: "经典简洁", description: "默认简洁风格"}`
@@ -97,10 +107,10 @@ digraph intake_gate {
 
 ## 工作流程
 
-1. **Round 1 intake** — 4 个独立问题（素材路径、模板、配色、编辑）
+1. **Round 1 intake** — 5 个独立问题（素材路径、**会议类型**、模板、配色、编辑）
 2. **Extract** — `scripts/extract_materials.py`，递归扫描所有文件类型
 3. **Prepare notes** — `scripts/prepare_article_notes.py`，长材料时建立索引
-4. **Round 2 intake** — **环节识别**、日期/主持人、图片（每个都要问）、可选插页
+4. **Round 2 intake** — 日期/主持人、图片（每个都要问）、可选插页
 5. **Read** `references/editorial-style.md`，然后写 `article.json`
 6. **Render** → `check_article_json.py` → 修复 → 重新渲染
 7. **Deliver** — 预览 HTML、建议标题/摘要
@@ -111,7 +121,7 @@ digraph intake_gate {
 
 - **移动端阅读**：短段落、清晰标题、合理间距
 - **会议流程**：导读 → 英语交流 → 文献分享 → [时政交流] → 自由讨论 → 会议小结。空环节省略。
-- **非标会议**：当会议包含标准流程之外的环节（如毕业分享、就业分享、开题报告、论文答辩等），**必须用 `sessions` 数组替代 `sections`**。Round 2 的"环节识别"问题会帮你判断。`sessions` 中 agent 通过数组位置控制渲染顺序，预定义类型有专用样式，其他 type 走通用渲染（标题→topic→引言→items→小结）。
+- **非标会议**：Round 1 的"会议类型"问题会提前判断。当用户选择"有额外环节"或"完全不同的流程"时，**必须用 `sessions` 数组替代 `sections`**。`sessions` 中 agent 通过数组位置控制渲染顺序，预定义类型有专用样式，其他 type 走通用渲染（标题→topic→引言→items→小结）。
   - 示例（毕业分享+就业+时政的读书分享会）：`[english_exchange, graduation_sharing, career_sharing, policy_discussion, free_discussion]`
   - 判断标准：如果标准顺序（英语→文献→时政→自由讨论）套不上这次会议的内容，就用 `sessions`
 - **英语发言卡片**：每人一张卡片，保留英文原文全文。可用 `photo` 指定头像。

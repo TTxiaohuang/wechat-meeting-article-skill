@@ -1,0 +1,4 @@
+interface:
+  display_name: "WeChat Meeting Article"
+  short_description: "Turn weekly meeting materials into WeChat-ready article drafts."
+  default_prompt: "Use $wechat-meeting-article to generate a WeChat-ready weekly meeting article from my transcript, papers, slides, and speeches."

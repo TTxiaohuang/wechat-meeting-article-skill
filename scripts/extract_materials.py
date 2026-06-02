@@ -93,7 +93,73 @@ def convert_doc_to_docx(doc_path: Path) -> Path:
     )
 
 
-def extract_rtf(path: Path) -> str:
+def extract_html(path: Path) -> str:
+    """Extract readable text from an HTML file, stripping scripts and styles."""
+    from html.parser import HTMLParser
+
+    raw = read_text_file(path)
+
+    # Quick extraction for reveal.js / Slidev / similar slide frameworks
+    # These use <section> or <div class="slide"> to wrap each slide
+    slide_pattern = re.compile(
+        r'<(?:section|div)\b[^>]*class="[^"]*(?:slide|reveal)[^"]*"[^>]*>(.*?)</(?:section|div)>',
+        re.DOTALL | re.IGNORECASE,
+    )
+    slides = slide_pattern.findall(raw)
+
+    class _TextExtractor(HTMLParser):
+        def __init__(self) -> None:
+            super().__init__()
+            self._skip = False
+            self._skip_tags = {"script", "style", "noscript", "svg", "head"}
+            self._parts: list[str] = []
+
+        def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+            if tag in self._skip_tags:
+                self._skip = True
+            if tag in {"h1", "h2", "h3", "h4", "h5", "h6"}:
+                self._parts.append("\n\n## ")
+            elif tag in {"p", "div", "br"}:
+                self._parts.append("\n\n")
+            elif tag == "li":
+                self._parts.append("\n- ")
+            elif tag == "tr":
+                self._parts.append("\n")
+            elif tag == "td" or tag == "th":
+                self._parts.append(" | ")
+            elif tag == "hr":
+                self._parts.append("\n---\n")
+
+        def handle_endtag(self, tag: str) -> None:
+            if tag in self._skip_tags:
+                self._skip = False
+            if tag in {"h1", "h2", "h3", "h4", "h5", "h6"}:
+                self._parts.append("\n")
+
+        def handle_data(self, data: str) -> None:
+            if not self._skip:
+                self._parts.append(data)
+
+    def _extract_block(block: str) -> str:
+        parser = _TextExtractor()
+        parser.feed(block)
+        text = "".join(parser._parts)
+        text = re.sub(r'[ \t]+', ' ', text)
+        text = re.sub(r'\n{3,}', '\n\n', text)
+        return text.strip()
+
+    # If slide sections found, extract each as a separate block
+    if len(slides) >= 2:
+        results: list[str] = []
+        for i, slide_html in enumerate(slides, start=1):
+            text = _extract_block(slide_html)
+            if text:
+                results.append(f"## Slide {i}\n\n{text}")
+        if results:
+            return "\n\n".join(results)
+
+    # General HTML extraction
+    return _extract_block(raw)
     """Extract plain text from an RTF file by stripping control codes."""
     raw = read_text_file(path)
     # Remove header up to first \deflang or \ansi or first group content
@@ -240,6 +306,8 @@ def extract_one(path: Path, pdf_pages: int | None) -> tuple[str, str, dict[str, 
         return "rtf", extract_rtf(path), {}
     if suffix in {".txt", ".md"}:
         return suffix.lstrip("."), read_text_file(path), {}
+    if suffix in {".html", ".htm"}:
+        return "html", extract_html(path), {}
     raise ValueError(f"unsupported file type: {suffix}")
 
 
@@ -257,7 +325,7 @@ def main() -> int:
     out_dir = args.out.resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    supported = {".docx", ".doc", ".pptx", ".pdf", ".txt", ".md", ".rtf"}
+    supported = {".docx", ".doc", ".pptx", ".pdf", ".txt", ".md", ".rtf", ".html", ".htm"}
     if args.no_recursive:
         files = [p for p in sorted(input_dir.iterdir()) if p.is_file() and p.suffix.lower() in supported]
     else:

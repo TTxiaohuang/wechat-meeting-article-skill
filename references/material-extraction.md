@@ -1,6 +1,6 @@
 # 素材提取
 
-当输入文件夹包含 `.docx`、`.pptx`、`.pdf`、`.txt` 或 `.md` 文件时参考本文件。
+当输入文件夹包含 `.docx`、`.pptx`、`.pdf`、`.txt`、`.md`、`.html` 或 `.htm` 文件时参考本文件。
 
 ## 推荐命令
 
@@ -83,6 +83,7 @@ python -c "from pathlib import Path; print(Path('extracted_materials/file.md').r
 - `.docx`：保留段落顺序和表格行。
 - `.pptx`：保留幻灯片顺序和编号。
 - `.pdf`：默认全量提取，以便文章覆盖标题、作者、摘要、方法、结果、稳健性检验、讨论和结论。全量提取不意味着 agent 必须把整个 PDF 放入上下文；通过标题和关键词搜索（如 摘要、引言、研究设计、数据、方法、结果、机制、稳健性、讨论、结论、limitations、conclusion）有选择地阅读。
+- `.html`/`.htm`：提取正文文本，自动去除 `<script>`、`<style>`、`<svg>` 等非内容标签。对 reveal.js、Slidev 等演示框架生成的 HTML，自动按 `<section>` 或 `<div class="slide">` 拆分为幻灯片。
 - 提取的 Markdown 文件较长时，先读 `article_notes`，再用搜索或定向读取。除非文件足够短能放进上下文，否则不要逐字读入。
 - 提取错误记录到 manifest 中，不要静默跳过文件。
 - 将提取的文本视为原始证据。最终文章仍需要基于来源的综合和可读的改写。

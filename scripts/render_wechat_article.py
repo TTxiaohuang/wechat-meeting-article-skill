@@ -611,31 +611,6 @@ def render_custom_sections(article: dict[str, Any], placement: str) -> str:
     return "".join(rendered)
 
 
-AVATAR_COLORS = [
-    "#4a90d9",  # blue
-    "#5ba55b",  # green
-    "#c46b8a",  # pink
-    "#d4a04a",  # gold
-    "#7a6bb5",  # purple
-    "#5a9e9e",  # teal
-    "#c47a4a",  # orange
-]
-
-
-def generate_avatar_svg(speaker: str, card_index: int) -> str:
-    """Generate an SVG data-uri avatar with the speaker's initial letter."""
-    letter = (speaker.strip()[0] if speaker.strip() else "?").upper()
-    color = AVATAR_COLORS[(card_index - 1) % len(AVATAR_COLORS)]
-    svg = (
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36">'
-        f'<circle cx="18" cy="18" r="18" fill="{color}"/>'
-        f'<text x="18" y="18" text-anchor="middle" dominant-baseline="central"'
-        f' font-family="-apple-system,BlinkMacSystemFont,sans-serif"'
-        f' font-size="16" font-weight="700" fill="#ffffff">{letter}</text>'
-        f'</svg>'
-    )
-    return f"data:image/svg+xml;base64,{base64.b64encode(svg.encode()).decode()}"
-
 
 def render_english(data: dict[str, Any], index: int, branded: bool = False) -> str:
     speeches = data.get("speeches") or []
@@ -653,35 +628,11 @@ def render_english(data: dict[str, Any], index: int, branded: bool = False) -> s
     for card_index, item in enumerate(speeches, start=1):
         speaker = item.get("speaker") or "Speaker"
         role = item.get("role") or ""
-        photo = item.get("photo") or ""
-        photo_html = ""
-        if photo:
-            resolved_photo, is_ph = resolve_image_src(photo)
-            if not is_ph:
-                photo_html = (
-                    f'<section style="width:36px;height:36px;border-radius:50%;'
-                    f'background-image:url({esc(resolved_photo)});'
-                    f'background-size:cover;background-position:center;'
-                    f'margin-bottom:8px;"></section>'
-                )
-            else:
-                photo_html = (
-                    f'<section style="width:36px;height:36px;border-radius:50%;'
-                    f'background-image:url({generate_avatar_svg(speaker, card_index)});'
-                    f'background-size:cover;margin-bottom:8px;"></section>'
-                )
-        else:
-            photo_html = (
-                f'<section style="width:36px;height:36px;border-radius:50%;'
-                f'background-image:url({generate_avatar_svg(speaker, card_index)});'
-                f'background-size:cover;margin-bottom:8px;"></section>'
-            )
         cards.append(
             f'<section style="box-sizing:border-box;display:inline-block;vertical-align:top;width:92%;'
             f'max-width:340px;min-height:220px;margin:8px 12px 8px 0;padding:16px 16px 14px;white-space:normal;'
             f'border:1px solid {BORDER};border-radius:8px;background:#ffffff;">'
             f'<p style="margin:0;color:{MUTED};font-size:12px;line-height:1.4;text-align:right;">{card_index}/{total}</p>'
-            f'{photo_html}'
             f'<p style="margin:0;color:{ACCENT};font-size:18px;font-weight:800;line-height:1.4;">{esc(speaker)}</p>'
             f'<p style="margin:2px 0 10px;color:{MUTED};font-size:13px;line-height:1.5;">{esc(role)}</p>'
             f'{paragraphs(item.get("text") or "", size=14, margin_top=0)}'

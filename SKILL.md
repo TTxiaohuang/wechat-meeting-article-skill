@@ -124,7 +124,7 @@ digraph intake_gate {
 - **非标会议**：Round 1 的"会议类型"问题会提前判断。当用户选择"有额外环节"或"完全不同的流程"时，**必须用 `sessions` 数组替代 `sections`**。`sessions` 中 agent 通过数组位置控制渲染顺序，预定义类型有专用样式，其他 type 走通用渲染（标题→topic→引言→items→小结）。
   - 示例（毕业分享+就业+时政的读书分享会）：`[english_exchange, graduation_sharing, career_sharing, policy_discussion, free_discussion]`
   - 判断标准：如果标准顺序（英语→文献→时政→自由讨论）套不上这次会议的内容，就用 `sessions`
-- **英语发言卡片**：每人一张卡片，保留英文原文全文。可用 `photo` 指定头像。
+- **英语发言卡片**：每人一张卡片，保留英文原文全文。
 - **文献分享**：展开为研究背景、研究问题、方法、发现、讨论价值。区分事实与评论。
 - **自由讨论**：必须包含简短的 `intro` 概括话题。条目必须编辑提炼——归纳总结，不粘贴原始转录。不能与文献讨论内容重复。**同一发言人的内容必须合并为一个 item**，不要拆成多张卡片。
 - **JSON 写入**：**不要手写 JSON 字符串**。使用 `scripts/write_article_json.py`（写 Python dict 再转 JSON）或 `json.dump()`。手写中文引号必然导致编码错误。

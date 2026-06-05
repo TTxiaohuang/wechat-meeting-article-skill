@@ -62,8 +62,7 @@ python scripts/draft_article_from_materials.py extracted_materials --out article
           "role": "学生",
           "mode": "full_text",
           "text": "English speech text here.",
-          "source": "english_speeches/zhangsan.docx",
-          "photo": "zhangsan.jpg"
+          "source": "english_speeches/zhangsan.docx"
         }
       ]
     },
@@ -192,7 +191,6 @@ python scripts/draft_article_from_materials.py extracted_materials --out article
 - 文献分享优先使用 `background`、`research_question`、`methods_data`、`findings`、`discussion_value`，而非简短的 `summary`。
 - `images` 可以是字符串或对象 `{"url": "路径或URL", "caption": "图注", "alt": "替代文本"}`。仅使用素材中提供或明确生成的图片。
 - 将素材中的图片放入章节级 `images` 或论文级 `images`。微信导入时优先使用已上传到可靠图床的 URL，本地路径仅用于预览。
-- 英语发言卡片可用 `photo` 字段指定发言人头像（如 `"photo": "edward.jpg"`）。渲染器显示为姓名上方的小圆形头像。使用相对于素材文件夹的路径。`photo` 为空或文件不存在时，渲染器自动生成 SVG 首字母头像。
 - 使用 `--embed-images` 参数将本地图片嵌入为 base64 data-uri，确保浏览器预览正常显示，粘贴到微信时自动上传。不用此参数时，本地图片路径必须从 HTML 文件位置可解析。
 - **条目级图片**：评论、讨论条目和观点支持可选的 `images` 数组，渲染在引用块底部。示例：`{"speaker": "同学", "text": "...", "images": ["result.png"]}`。
 - **行内图片标记**：文本字段可包含 `{{image:src}}` 或 `{{image:src|caption}}` 标记，在指定位置插入图片。渲染器在标记处分割文本并插入图片。示例：`"text": "结果如下：\n\n{{image:table1.png|回归结果}}\n\n可以看出..."`。行内标记适用于所有由 `paragraphs()` 渲染的文本字段。
